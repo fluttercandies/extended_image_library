@@ -60,12 +60,13 @@ class ExtendedNetworkImageProvider
   ImageStreamCompleter load(ExtendedNetworkImageProvider key) {
     // TODO: implement load
     return MultiFrameImageStreamCompleter(
-        codec: _loadAsync(key),
-        scale: key.scale,
-        informationCollector: (StringBuffer information) {
-          information.writeln('Image provider: $this');
-          information.write('Image key: $key');
-        });
+      codec: _loadAsync(key),
+      scale: key.scale,
+//        informationCollector: (StringBuffer information) {
+//          information.writeln('Image provider: $this');
+//          information.write('Image key: $key');
+//        }
+    );
   }
 
   @override
