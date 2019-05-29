@@ -1,3 +1,7 @@
+## [0.1.2]
+
+* update path_provider 1.1.0
+
 ## [0.1.1]
 
 * disabled informationCollector to keep backwards compatibility for now
