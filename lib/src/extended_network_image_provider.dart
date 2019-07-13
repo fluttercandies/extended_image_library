@@ -58,7 +58,6 @@ class ExtendedNetworkImageProvider
 
   @override
   ImageStreamCompleter load(ExtendedNetworkImageProvider key) {
-    // TODO: implement load
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,
@@ -66,13 +65,18 @@ class ExtendedNetworkImageProvider
 //          information.writeln('Image provider: $this');
 //          information.write('Image key: $key');
 //        }
+      informationCollector: () {
+        return <DiagnosticsNode>[
+          DiagnosticsProperty<ImageProvider>('Image provider', this),
+          DiagnosticsProperty<ExtendedNetworkImageProvider>('Image key', key),
+        ];
+      },
     );
   }
 
   @override
   Future<ExtendedNetworkImageProvider> obtainKey(
       ImageConfiguration configuration) {
-    // TODO: implement obtainKey
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
