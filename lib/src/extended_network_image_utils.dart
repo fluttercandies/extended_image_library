@@ -7,24 +7,24 @@ import 'package:path_provider/path_provider.dart';
 
 const String CacheImageFolderName = "cacheimage";
 
-String keyToMd5(String key) => md5.convert(utf8.encode(key)).toString();
+String keyToMd5(String key) => md5.convert( utf8.encode( key ) ).toString( );
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
 Future<bool> clearDiskCachedImages({Duration duration}) async {
   try {
     Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
-    if (_cacheImagesDirectory.existsSync()) {
+        join( (await getTemporaryDirectory( )).path, CacheImageFolderName ) );
+    if (_cacheImagesDirectory.existsSync( )) {
       if (duration == null) {
-        _cacheImagesDirectory.deleteSync(recursive: true);
+        _cacheImagesDirectory.deleteSync( recursive: true );
       } else {
-        var now = DateTime.now();
-        for (var file in _cacheImagesDirectory.listSync()) {
-          FileStat fs = file.statSync();
-          if (now.subtract(duration).isAfter(fs.changed)) {
+        var now = DateTime.now( );
+        for (var file in _cacheImagesDirectory.listSync( )) {
+          FileStat fs = file.statSync( );
+          if (now.subtract( duration ).isAfter( fs.changed )) {
             //print("remove expired cached image");
-            file.deleteSync(recursive: true);
+            file.deleteSync( recursive: true );
           }
         }
       }
@@ -39,16 +39,9 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 ///  <param name="url">clear specific one</param>
 Future<bool> clearDiskCachedImage(String url) async {
   try {
-    var key = keyToMd5(url);
-    Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
-    if (_cacheImagesDirectory.existsSync()) {
-      for (var file in _cacheImagesDirectory.listSync()) {
-        if (file.path.endsWith(key)) {
-          file.deleteSync(recursive: true);
-          return true;
-        }
-      }
+    var file = await getCachedImageFile( url );
+    if(file!=null){
+      file.delete( recursive: true );
     }
   } catch (_) {
     return false;
@@ -56,9 +49,30 @@ Future<bool> clearDiskCachedImage(String url) async {
   return true;
 }
 
+///get the local file of the cached image
+
+Future<File> getCachedImageFile(String url) async {
+  try {
+    var key = keyToMd5( url );
+    Directory _cacheImagesDirectory = Directory(
+        join( (await getTemporaryDirectory( )).path, CacheImageFolderName ) );
+    if (_cacheImagesDirectory.existsSync( )) {
+      for (var file in _cacheImagesDirectory.listSync( )) {
+        if (file.path.endsWith( key )) {
+          return file;
+        }
+      }
+    }
+  } catch (_) {
+    return null;
+  }
+  return null;
+}
+
+
 ///clear all of image in memory
 void clearMemoryImageCache() {
-  PaintingBinding.instance.imageCache.clear();
+  PaintingBinding.instance.imageCache.clear( );
 }
 
 /// get ImageCache
