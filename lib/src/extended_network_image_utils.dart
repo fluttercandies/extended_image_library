@@ -39,22 +39,36 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 ///  <param name="url">clear specific one</param>
 Future<bool> clearDiskCachedImage(String url) async {
   try {
-    var key = keyToMd5(url);
-    Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
-    if (_cacheImagesDirectory.existsSync()) {
-      for (var file in _cacheImagesDirectory.listSync()) {
-        if (file.path.endsWith(key)) {
-          file.deleteSync(recursive: true);
-          return true;
-        }
-      }
+    var file = await getCachedImageFile(url);
+    if(file!=null){
+      file.delete( recursive: true );
     }
   } catch (_) {
     return false;
   }
   return true;
 }
+
+///get the local file of the cached image
+
+Future<File> getCachedImageFile(String url) async {
+  try {
+    var key = keyToMd5( url );
+    Directory _cacheImagesDirectory = Directory(
+        join( (await getTemporaryDirectory( )).path, CacheImageFolderName ) );
+    if (_cacheImagesDirectory.existsSync( )) {
+      for (var file in _cacheImagesDirectory.listSync( )) {
+        if (file.path.endsWith(key)) {
+          return file;
+        }
+      }
+    }
+  } catch (_) {
+    return null;
+  }
+  return null;
+}
+
 
 ///clear all of image in memory
 void clearMemoryImageCache() {
