@@ -10,8 +10,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'extended_network_image_utils.dart';
 
-class ExtendedNetworkImageProvider
-    extends ImageProvider<ExtendedNetworkImageProvider> {
+class ExtendedNetworkImageProvider extends ImageProvider<ExtendedNetworkImageProvider> {
   /// Creates an object that fetches the image at the given URL.
   ///
   /// The arguments must not be null.
@@ -75,8 +74,7 @@ class ExtendedNetworkImageProvider
   }
 
   @override
-  Future<ExtendedNetworkImageProvider> obtainKey(
-      ImageConfiguration configuration) {
+  Future<ExtendedNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
@@ -116,10 +114,8 @@ class ExtendedNetworkImageProvider
   }
 
   ///get the image from cache folder.
-  Future<Uint8List> _loadCache(
-      ExtendedNetworkImageProvider key, String md5Key) async {
-    Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
+  Future<Uint8List> _loadCache(ExtendedNetworkImageProvider key, String md5Key) async {
+    Directory _cacheImagesDirectory = Directory(join((await getTemporaryDirectory()).path, CacheImageFolderName));
     //exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
       File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
@@ -145,12 +141,7 @@ class ExtendedNetworkImageProvider
   /// get the image from network.
   Future<Uint8List> _loadNetwork(ExtendedNetworkImageProvider key) async {
     try {
-      Response response = await HttpClientHelper.get(url,
-          headers: key.headers,
-          timeLimit: key.timeLimit,
-          timeRetry: key.timeRetry,
-          retries: key.retries,
-          cancelToken: key.cancelToken);
+      Response response = await HttpClientHelper.get(url, headers: key.headers, timeLimit: key.timeLimit, timeRetry: key.timeRetry, retries: key.retries, cancelToken: key.cancelToken);
       return response.bodyBytes;
     } on OperationCanceledError catch (_) {
       print('User cancel request $url.');
@@ -188,8 +179,7 @@ class ExtendedNetworkImageProvider
 
 ///get network image data from cached
 Future<Uint8List> getNetworkImageData(String url, {bool useCache: true}) async {
-  ExtendedNetworkImageProvider imageProvider =
-      new ExtendedNetworkImageProvider(url);
+  ExtendedNetworkImageProvider imageProvider = new ExtendedNetworkImageProvider(url);
   String uId = keyToMd5(url);
 
   if (useCache) {
@@ -199,4 +189,36 @@ Future<Uint8List> getNetworkImageData(String url, {bool useCache: true}) async {
   }
 
   return await imageProvider._loadNetwork(imageProvider);
+}
+
+Future<File> getNetworkImageFile(String url, {bool useCache: true}) async {
+  ExtendedNetworkImageProvider imageProvider = new ExtendedNetworkImageProvider(url);
+  String uId = keyToMd5(url);
+
+  if (useCache) {
+    try {
+      Directory _cacheImagesDirectory = Directory(join((await getTemporaryDirectory()).path, CacheImageFolderName));
+      //exist, try to find cache image file
+      if (_cacheImagesDirectory.existsSync()) {
+        File cacheFlie = File(join(_cacheImagesDirectory.path, uId));
+        if (cacheFlie.existsSync()) {
+          return await cacheFlie;
+        }
+      }
+      //create folder
+      else {
+        await _cacheImagesDirectory.create();
+      }
+      //load from network
+      Uint8List data = await imageProvider._loadNetwork(imageProvider);
+      if (data != null) {
+        //cache image file
+        File cacheFile = await (File(join(_cacheImagesDirectory.path, uId))).writeAsBytes(data);
+
+        return cacheFile;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
 }
