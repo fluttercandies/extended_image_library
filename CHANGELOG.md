@@ -1,3 +1,7 @@
+## [0.1.5]
+
+* add getCachedImageFile(url) method
+
 ## [0.1.4]
 
 * improve codes base on v1.7.8
