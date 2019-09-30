@@ -10,6 +10,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'extended_network_image_utils.dart';
 
+typedef CompressCallback = Future<bool> Function(File, String);
+
 class ExtendedNetworkImageProvider
     extends ImageProvider<ExtendedNetworkImageProvider> {
   /// Creates an object that fetches the image at the given URL.
@@ -24,6 +26,7 @@ class ExtendedNetworkImageProvider
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
     CancellationToken cancelToken,
+    this.compressCallback,
   })  : assert(url != null),
         assert(scale != null),
         cancelToken = cancelToken ?? CancellationToken();
@@ -51,6 +54,8 @@ class ExtendedNetworkImageProvider
 
   ///token to cancel network request
   final CancellationToken cancelToken;
+
+  final CompressCallback compressCallback;
 
 //  /// cancel network request by extended image
 //  /// if false, cancel by user
@@ -105,7 +110,6 @@ class ExtendedNetworkImageProvider
         print(e);
       }
     }
-
     //Failed to load
     if (reuslt == null) {
       //reuslt = await ui.instantiateImageCodec(kTransparentImage);
@@ -124,6 +128,9 @@ class ExtendedNetworkImageProvider
     if (_cacheImagesDirectory.existsSync()) {
       File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
       if (cacheFlie.existsSync()) {
+        if (cacheFlie.lengthSync() > 0 && compressCallback != null) {
+          cacheFlie = await _compress(cacheFlie);
+        }
         return await cacheFlie.readAsBytes();
       }
     }
@@ -135,7 +142,13 @@ class ExtendedNetworkImageProvider
     Uint8List data = await _loadNetwork(key);
     if (data != null) {
       //cache image file
-      await (File(join(_cacheImagesDirectory.path, md5Key))).writeAsBytes(data);
+      File networkCacheFile =
+          await (File(join(_cacheImagesDirectory.path, md5Key)))
+              .writeAsBytes(data);
+      if (networkCacheFile.lengthSync() > 0 && compressCallback != null) {
+        networkCacheFile = await _compress(networkCacheFile);
+        data = await networkCacheFile.readAsBytes();
+      }
       return data;
     }
 
@@ -157,6 +170,22 @@ class ExtendedNetworkImageProvider
       return Future.error(StateError('User cancel request $url.'));
     } catch (e) {}
     return null;
+  }
+
+  Future<File> _compress(File _file) async {
+    var _tempUrl = "temp$url";
+    File _tempFile = await getCachedImageFile(_tempUrl);
+    if (_tempFile == null) {
+      final md5Key = keyToMd5(_tempUrl);
+      Directory _cacheImagesDirectory = Directory(
+          join((await getTemporaryDirectory()).path, CacheImageFolderName));
+      _tempFile = File(join(_cacheImagesDirectory.path, md5Key));
+      bool isDeleteCompressSourceCached = await compressCallback(_file, _tempFile.absolute.path);
+      if (isDeleteCompressSourceCached) {
+        await clearDiskCachedImage(url);
+      }
+    }
+    return _tempFile;
   }
 
   @override
