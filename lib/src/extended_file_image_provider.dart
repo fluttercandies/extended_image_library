@@ -29,4 +29,19 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
 
     return await instantiateImageCodec(bytes);
   }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) return false;
+    final ExtendedFileImageProvider typedOther = other;
+    bool result =
+        file?.path == typedOther.file?.path && scale == typedOther.scale;
+    if (result) {
+      rawImageData ??= typedOther.rawImageData;
+    }
+    return result;
+  }
+
+  @override
+  int get hashCode => hashValues(file?.path, scale);
 }

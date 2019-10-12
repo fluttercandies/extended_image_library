@@ -165,7 +165,11 @@ class ExtendedNetworkImageProvider
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
     final ExtendedNetworkImageProvider typedOther = other;
-    return url == typedOther.url && scale == typedOther.scale;
+    bool result = url == typedOther.url && scale == typedOther.scale;
+    if (result) {
+      rawImageData ??= typedOther.rawImageData;
+    }
+    return result;
   }
 
   @override

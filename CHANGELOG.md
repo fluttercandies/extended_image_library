@@ -1,3 +1,7 @@
+## [0.1.7]
+
+* override == method to set rawImageData
+  
 ## [0.1.6]
 
 * add ExtendedImageProvider
