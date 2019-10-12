@@ -20,4 +20,7 @@ class ExtendedMemoryImageProvider extends MemoryImage
     assert(key == this);
     return instantiateImageCodec(bytes);
   }
+
+  @override
+  Uint8List get rawImageData => bytes;
 }
