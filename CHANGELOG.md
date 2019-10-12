@@ -1,3 +1,12 @@
+## [0.1.6]
+
+* add ExtendedImageProvider
+      ExtendedExactAssetImageProvider
+      ExtendedAssetImageProvider
+      ExtendedFileImageProvider
+      ExtendedMemoryImageProvider
+  now we can get raw image data from ExtendedImageProvider     
+  
 ## [0.1.5]
 
 * add getCachedImageFile(url) method
