@@ -1,17 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' as ui show instantiateImageCodec, Codec;
+import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'extended_image_provider.dart';
 import 'extended_network_image_utils.dart';
 
 class ExtendedNetworkImageProvider
-    extends ImageProvider<ExtendedNetworkImageProvider> {
+    extends ImageProvider<ExtendedNetworkImageProvider>
+    with ExtendedImageProvider {
   /// Creates an object that fetches the image at the given URL.
   ///
   /// The arguments must not be null.
@@ -171,12 +173,6 @@ class ExtendedNetworkImageProvider
 
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';
-
-  ///override this method, so that you can handle data,
-  ///for example compress
-  Future<ui.Codec> instantiateImageCodec(Uint8List data) async {
-    return await ui.instantiateImageCodec(data);
-  }
 }
 
 ///save netwrok image to photo
