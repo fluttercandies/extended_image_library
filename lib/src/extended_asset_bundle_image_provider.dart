@@ -37,6 +37,22 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     if (data == null) throw 'Unable to read data';
     return await instantiateImageCodec(data.buffer.asUint8List());
   }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) return false;
+    final ExtendedExactAssetImageProvider typedOther = other;
+    bool result = keyName == typedOther.keyName &&
+        scale == typedOther.scale &&
+        bundle == typedOther.bundle;
+    if (result) {
+      rawImageData ??= typedOther.rawImageData;
+    }
+    return result;
+  }
+
+  @override
+  int get hashCode => hashValues(keyName, scale, bundle);
 }
 
 class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
@@ -68,4 +84,18 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
     if (data == null) throw 'Unable to read data';
     return await instantiateImageCodec(data.buffer.asUint8List());
   }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) return false;
+    final ExtendedAssetImageProvider typedOther = other;
+    bool result = keyName == typedOther.keyName && bundle == typedOther.bundle;
+    if (result) {
+      rawImageData ??= typedOther.rawImageData;
+    }
+    return result;
+  }
+
+  @override
+  int get hashCode => hashValues(keyName, bundle);
 }
