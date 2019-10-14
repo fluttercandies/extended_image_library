@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'extended_image_provider.dart';
 
 class ExtendedExactAssetImageProvider extends ExactAssetImage
     with ExtendedImageProvider {
+  ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
   ExtendedExactAssetImageProvider(
     String assetName, {
     AssetBundle bundle,
@@ -16,6 +18,20 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
 
   @override
+  Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
+    Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
+    super.obtainKey(configuration).then((value) {
+      if (value != null) {
+        _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
+            bundle: value.bundle, scale: value.scale, name: value.name);
+      }
+      completer.complete(_extendedAssetBundleImageKey);
+    });
+    return completer.future;
+  }
+
+  @override
   ImageStreamCompleter load(AssetBundleImageKey key) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
@@ -35,27 +51,18 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   Future<ui.Codec> _loadAsync(AssetBundleImageKey key) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) throw 'Unable to read data';
-    return await instantiateImageCodec(data.buffer.asUint8List());
+    var result = data.buffer.asUint8List();
+    _extendedAssetBundleImageKey.data.value = result;
+    return await instantiateImageCodec(result);
   }
 
   @override
-  bool operator ==(dynamic other) {
-    if (other.runtimeType != runtimeType) return false;
-    final ExtendedExactAssetImageProvider typedOther = other;
-    bool result = keyName == typedOther.keyName &&
-        scale == typedOther.scale &&
-        bundle == typedOther.bundle;
-    if (result) {
-      rawImageData ??= typedOther.rawImageData;
-    }
-    return result;
-  }
-
-  @override
-  int get hashCode => hashValues(keyName, scale, bundle);
+  Uint8List get rawImageData =>
+      super.rawImageData ?? _extendedAssetBundleImageKey?.data?.value;
 }
 
 class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
+  ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
   ExtendedAssetImageProvider(
     String assetName, {
     AssetBundle bundle,
@@ -63,6 +70,20 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   }) : super(assetName, bundle: bundle, package: package);
 
   @override
+  Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
+    Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
+    super.obtainKey(configuration).then((value) {
+      if (value != null) {
+        _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
+            bundle: value.bundle, scale: value.scale, name: value.name);
+      }
+      completer.complete(_extendedAssetBundleImageKey);
+    });
+    return completer.future;
+  }
+
+  @override
   ImageStreamCompleter load(AssetBundleImageKey key) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
@@ -82,20 +103,46 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   Future<ui.Codec> _loadAsync(AssetBundleImageKey key) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) throw 'Unable to read data';
-    return await instantiateImageCodec(data.buffer.asUint8List());
+    var result = data.buffer.asUint8List();
+    _extendedAssetBundleImageKey.data.value = result;
+    return await instantiateImageCodec(result);
   }
+
+  @override
+  Uint8List get rawImageData =>
+      super.rawImageData ?? _extendedAssetBundleImageKey?.data?.value;
+}
+
+class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
+  final _Data data;
+  ExtendedAssetBundleImageKey({
+    @required AssetBundle bundle,
+    @required String name,
+    @required double scale,
+  })  : data = _Data(),
+        assert(bundle != null),
+        assert(name != null),
+        assert(scale != null),
+        super(bundle: bundle, name: name, scale: scale);
 
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
-    final ExtendedAssetImageProvider typedOther = other;
-    bool result = keyName == typedOther.keyName && bundle == typedOther.bundle;
+    final ExtendedAssetBundleImageKey typedOther = other;
+    var result = bundle == typedOther.bundle &&
+        name == typedOther.name &&
+        scale == typedOther.scale;
     if (result) {
-      rawImageData ??= typedOther.rawImageData;
+      data.value ??= typedOther.data.value;
     }
     return result;
   }
 
   @override
-  int get hashCode => hashValues(keyName, bundle);
+  int get hashCode => hashValues(bundle, name, scale);
+}
+
+class _Data {
+  Uint8List value;
+  _Data();
 }

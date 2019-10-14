@@ -1,3 +1,7 @@
+## [0.1.8]
+
+* add ExtendedAssetBundleImageKey to support to cache rawImageData
+
 ## [0.1.7]
 
 * override == method to set rawImageData
