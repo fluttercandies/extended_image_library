@@ -9,16 +9,16 @@ class ExtendedMemoryImageProvider extends MemoryImage
       : super(bytes, scale: scale);
 
   @override
-  ImageStreamCompleter load(MemoryImage key) {
+  ImageStreamCompleter load(MemoryImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
     );
   }
 
-  Future<ui.Codec> _loadAsync(MemoryImage key) {
+  Future<ui.Codec> _loadAsync(MemoryImage key, DecoderCallback decode) {
     assert(key == this);
-    return instantiateImageCodec(bytes);
+    return instantiateImageCodec(bytes, decode);
   }
 
   @override
