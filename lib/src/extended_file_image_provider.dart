@@ -10,9 +10,9 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
   ExtendedFileImageProvider(File file, {double scale = 1.0})
       : super(file, scale: scale);
   @override
-  ImageStreamCompleter load(FileImage key) {
+  ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield ErrorDescription('Path: ${file?.path}');
@@ -20,14 +20,14 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     );
   }
 
-  Future<ui.Codec> _loadAsync(FileImage key) async {
+  Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
     assert(key == this);
 
     final Uint8List bytes = await file.readAsBytes();
 
     if (bytes.lengthInBytes == 0) return null;
 
-    return await instantiateImageCodec(bytes);
+    return await instantiateImageCodec(bytes, decode);
   }
 
   @override

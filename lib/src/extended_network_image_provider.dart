@@ -59,9 +59,10 @@ class ExtendedNetworkImageProvider
 //  final bool autoCancel;
 
   @override
-  ImageStreamCompleter load(ExtendedNetworkImageProvider key) {
+  ImageStreamCompleter load(
+      ExtendedNetworkImageProvider key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
 //        informationCollector: (StringBuffer information) {
 //          information.writeln('Image provider: $this');
@@ -82,7 +83,8 @@ class ExtendedNetworkImageProvider
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
-  Future<ui.Codec> _loadAsync(ExtendedNetworkImageProvider key) async {
+  Future<ui.Codec> _loadAsync(
+      ExtendedNetworkImageProvider key, DecoderCallback decode) async {
     assert(key == this);
     final md5Key = keyToMd5(key.url);
     ui.Codec reuslt;
@@ -90,7 +92,7 @@ class ExtendedNetworkImageProvider
       try {
         var data = await _loadCache(key, md5Key);
         if (data != null) {
-          reuslt = await instantiateImageCodec(data);
+          reuslt = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
         print(e);
@@ -101,7 +103,7 @@ class ExtendedNetworkImageProvider
       try {
         var data = await _loadNetwork(key);
         if (data != null) {
-          reuslt = await instantiateImageCodec(data);
+          reuslt = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
         print(e);

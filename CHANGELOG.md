@@ -1,3 +1,7 @@
+## [0.1.9]
+
+* fix breaking change for flutter 1.10.15 about miss load parameter
+
 ## [0.1.8]
 
 * add ExtendedAssetBundleImageKey to support to cache rawImageData

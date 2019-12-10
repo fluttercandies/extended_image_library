@@ -32,9 +32,9 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   }
 
   @override
-  ImageStreamCompleter load(AssetBundleImageKey key) {
+  ImageStreamCompleter load(AssetBundleImageKey key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield DiagnosticsProperty<ImageProvider>('Image provider', this);
@@ -48,12 +48,13 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   ///
   /// This function is used by [load].
   @protected
-  Future<ui.Codec> _loadAsync(AssetBundleImageKey key) async {
+  Future<ui.Codec> _loadAsync(
+      AssetBundleImageKey key, DecoderCallback decode) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) throw 'Unable to read data';
     var result = data.buffer.asUint8List();
     _extendedAssetBundleImageKey.data.value = result;
-    return await instantiateImageCodec(result);
+    return await instantiateImageCodec(result, decode);
   }
 
   @override
@@ -84,9 +85,9 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   }
 
   @override
-  ImageStreamCompleter load(AssetBundleImageKey key) {
+  ImageStreamCompleter load(AssetBundleImageKey key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield DiagnosticsProperty<ImageProvider>('Image provider', this);
@@ -100,12 +101,13 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   ///
   /// This function is used by [load].
   @protected
-  Future<ui.Codec> _loadAsync(AssetBundleImageKey key) async {
+  Future<ui.Codec> _loadAsync(
+      AssetBundleImageKey key, DecoderCallback decode) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) throw 'Unable to read data';
     var result = data.buffer.asUint8List();
     _extendedAssetBundleImageKey.data.value = result;
-    return await instantiateImageCodec(result);
+    return await instantiateImageCodec(result, decode);
   }
 
   @override
