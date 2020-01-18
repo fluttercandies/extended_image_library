@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'extended_network_image_provider.dart';
 
 const String CacheImageFolderName = "cacheimage";
 
@@ -40,8 +43,8 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 Future<bool> clearDiskCachedImage(String url) async {
   try {
     var file = await getCachedImageFile(url);
-    if(file!=null){
-      file.delete( recursive: true );
+    if (file != null) {
+      file.delete(recursive: true);
     }
   } catch (_) {
     return false;
@@ -53,11 +56,11 @@ Future<bool> clearDiskCachedImage(String url) async {
 
 Future<File> getCachedImageFile(String url) async {
   try {
-    var key = keyToMd5( url );
+    var key = keyToMd5(url);
     Directory _cacheImagesDirectory = Directory(
-        join( (await getTemporaryDirectory( )).path, CacheImageFolderName ) );
-    if (_cacheImagesDirectory.existsSync( )) {
-      for (var file in _cacheImagesDirectory.listSync( )) {
+        join((await getTemporaryDirectory()).path, CacheImageFolderName));
+    if (_cacheImagesDirectory.existsSync()) {
+      for (var file in _cacheImagesDirectory.listSync()) {
         if (file.path.endsWith(key)) {
           return file;
         }
@@ -68,7 +71,6 @@ Future<File> getCachedImageFile(String url) async {
   }
   return null;
 }
-
 
 ///clear all of image in memory
 void clearMemoryImageCache() {
@@ -126,3 +128,9 @@ ImageCache getMemoryImageCache() {
 //    cancelPendingNetworkImageByProvider(f, takeCareSameUrl: takeCareSameUrl);
 //  });
 //}
+
+///get network image data from cached
+Future<Uint8List> getNetworkImageData(String url, {bool useCache: true}) async {
+  return ExtendedNetworkImageProvider(url)
+      .getNetworkImageData(useCache: useCache);
+}
