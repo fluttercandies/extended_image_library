@@ -1,3 +1,7 @@
+## [0.2.0]
+
+* web support
+
 ## [0.1.9]
 
 * fix breaking change for flutter 1.10.15 about miss load parameter

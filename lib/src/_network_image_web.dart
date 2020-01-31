@@ -70,7 +70,7 @@ class ExtendedNetworkImageProvider
     );
   }
 
-  // TODO(garyq): We should eventually support custom decoding of network images on Web as
+  // todo(garyq): We should eventually support custom decoding of network images on Web as
   // well, see https://github.com/flutter/flutter/issues/42789.
   //
   // Web does not support decoding network images to a specified size. The decode parameter
