@@ -120,6 +120,8 @@ class ExtendedNetworkImageProvider
   //not support for web
   @override
   Future<Uint8List> getNetworkImageData({bool useCache = true}) {
-     return null;
+    return null;
   }
+
+  static get httpClient => null;
 }
