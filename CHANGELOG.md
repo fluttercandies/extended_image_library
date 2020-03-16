@@ -1,3 +1,8 @@
+## [0.2.1]
+
+* support loading progress for network
+* public HttpClient of ExtendedNetworkImageProvider
+  
 ## [0.2.0]
 
 * web support

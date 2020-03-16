@@ -50,4 +50,8 @@ abstract class ExtendedNetworkImageProvider
 
   ///get network image data from cached
   Future<Uint8List> getNetworkImageData({bool useCache: true});
+  
+  ///HttpClient for network, it's null on web
+  static get httpClient =>
+      network_image.ExtendedNetworkImageProvider.httpClient;
 }
