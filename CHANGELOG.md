@@ -2,6 +2,7 @@
 
 * support loading progress for network
 * public HttpClient of ExtendedNetworkImageProvider
+* add getCachedSizeBytes method
   
 ## [0.2.0]
 
