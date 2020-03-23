@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -145,7 +144,7 @@ class ExtendedNetworkImageProvider
     String md5Key,
   ) async {
     Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
     //exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
       File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
