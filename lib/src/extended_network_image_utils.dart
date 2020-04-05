@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -44,7 +45,7 @@ Future<bool> clearDiskCachedImage(String url) async {
   try {
     var file = await getCachedImageFile(url);
     if (file != null) {
-      file.delete(recursive: true);
+      await file.delete(recursive: true);
     }
   } catch (_) {
     return false;
@@ -83,9 +84,14 @@ ImageCache getMemoryImageCache() {
 }
 
 /// get network image data from cached
-Future<Uint8List> getNetworkImageData(String url, {bool useCache: true}) async {
-  return ExtendedNetworkImageProvider(url)
-      .getNetworkImageData(useCache: useCache);
+Future<Uint8List> getNetworkImageData(
+  String url, {
+  bool useCache = true,
+  StreamController<ImageChunkEvent> chunkEvents,
+}) async {
+  return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
+    chunkEvents: chunkEvents,
+  );
 }
 
 /// get total size of cached image

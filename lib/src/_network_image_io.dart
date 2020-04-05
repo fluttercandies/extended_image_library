@@ -22,7 +22,7 @@ class ExtendedNetworkImageProvider
     this.url, {
     this.scale = 1.0,
     this.headers,
-    this.cache: false,
+    this.cache = false,
     this.retries = 3,
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
@@ -191,9 +191,10 @@ class ExtendedNetworkImageProvider
               }
             : null,
       );
-      if (bytes.lengthInBytes == 0)
+      if (bytes.lengthInBytes == 0) {
         return Future.error(
             StateError('NetworkImage is an empty file: $resolved'));
+      }
 
       return bytes;
     } on OperationCanceledError catch (_) {
@@ -202,7 +203,7 @@ class ExtendedNetworkImageProvider
     } catch (e) {
       print(e);
     } finally {
-      chunkEvents.close();
+      await chunkEvents?.close();
     }
     return null;
   }
@@ -260,19 +261,16 @@ class ExtendedNetworkImageProvider
 
   ///get network image data from cached
   Future<Uint8List> getNetworkImageData({
-    bool useCache: true,
     StreamController<ImageChunkEvent> chunkEvents,
   }) async {
     String uId = keyToMd5(url);
 
-    if (useCache) {
-      try {
-        return await _loadCache(
-          this,
-          chunkEvents,
-          uId,
-        );
-      } catch (e) {}
+    if (cache) {
+      return await _loadCache(
+        this,
+        chunkEvents,
+        uId,
+      );
     }
 
     return await _loadNetwork(
@@ -291,8 +289,9 @@ class ExtendedNetworkImageProvider
   static HttpClient get httpClient {
     HttpClient client = _sharedHttpClient;
     assert(() {
-      if (debugNetworkImageHttpClientProvider != null)
+      if (debugNetworkImageHttpClientProvider != null) {
         client = debugNetworkImageHttpClientProvider();
+      }
       return true;
     }());
     return client;
