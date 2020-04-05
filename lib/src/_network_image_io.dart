@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,7 +22,7 @@ class ExtendedNetworkImageProvider
     this.url, {
     this.scale = 1.0,
     this.headers,
-    this.cache: false,
+    this.cache = false,
     this.retries = 3,
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
@@ -145,7 +144,7 @@ class ExtendedNetworkImageProvider
     String md5Key,
   ) async {
     Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, CacheImageFolderName));
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
     //exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
       File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
@@ -192,9 +191,10 @@ class ExtendedNetworkImageProvider
               }
             : null,
       );
-      if (bytes.lengthInBytes == 0)
+      if (bytes.lengthInBytes == 0) {
         return Future.error(
             StateError('NetworkImage is an empty file: $resolved'));
+      }
 
       return bytes;
     } on OperationCanceledError catch (_) {
@@ -203,7 +203,7 @@ class ExtendedNetworkImageProvider
     } catch (e) {
       print(e);
     } finally {
-      chunkEvents.close();
+      await chunkEvents?.close();
     }
     return null;
   }
@@ -261,19 +261,16 @@ class ExtendedNetworkImageProvider
 
   ///get network image data from cached
   Future<Uint8List> getNetworkImageData({
-    bool useCache: true,
     StreamController<ImageChunkEvent> chunkEvents,
   }) async {
     String uId = keyToMd5(url);
 
-    if (useCache) {
-      try {
-        return await _loadCache(
-          this,
-          chunkEvents,
-          uId,
-        );
-      } catch (e) {}
+    if (cache) {
+      return await _loadCache(
+        this,
+        chunkEvents,
+        uId,
+      );
     }
 
     return await _loadNetwork(
@@ -292,8 +289,9 @@ class ExtendedNetworkImageProvider
   static HttpClient get httpClient {
     HttpClient client = _sharedHttpClient;
     assert(() {
-      if (debugNetworkImageHttpClientProvider != null)
+      if (debugNetworkImageHttpClientProvider != null) {
         client = debugNetworkImageHttpClientProvider();
+      }
       return true;
     }());
     return client;
