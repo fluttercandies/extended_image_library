@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
@@ -49,8 +50,10 @@ abstract class ExtendedNetworkImageProvider
       ExtendedNetworkImageProvider key, DecoderCallback decode);
 
   ///get network image data from cached
-  Future<Uint8List> getNetworkImageData({bool useCache: true});
-  
+  Future<Uint8List> getNetworkImageData({
+    StreamController<ImageChunkEvent> chunkEvents,
+  });
+
   ///HttpClient for network, it's null on web
   static get httpClient =>
       network_image.ExtendedNetworkImageProvider.httpClient;

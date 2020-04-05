@@ -1,3 +1,8 @@
+## [0.2.2]
+
+* add analysis_options.yaml
+* fix null exception of chunkEvents
+
 ## [0.2.1]
 
 * support loading progress for network

@@ -27,7 +27,7 @@ class ExtendedNetworkImageProvider
     this.url, {
     this.scale = 1.0,
     this.headers,
-    bool cache: false,
+    bool cache = false,
     int retries = 3,
     Duration timeLimit,
     Duration timeRetry,
@@ -119,7 +119,9 @@ class ExtendedNetworkImageProvider
 
   //not support for web
   @override
-  Future<Uint8List> getNetworkImageData({bool useCache = true}) {
+  Future<Uint8List> getNetworkImageData({
+    StreamController<ImageChunkEvent> chunkEvents,
+  }) {
     return null;
   }
 
