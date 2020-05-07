@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
-
-import 'package:flutter/widgets.dart';
 import 'dart:ui' as ui show Codec;
+import 'package:flutter/widgets.dart';
 
 import 'extended_image_provider.dart';
 
@@ -25,21 +24,25 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
 
     final Uint8List bytes = await file.readAsBytes();
 
-    if (bytes.lengthInBytes == 0) return null;
+    if (bytes.lengthInBytes == 0) {
+      return null;
+    }
 
     return await instantiateImageCodec(bytes, decode);
   }
 
   @override
   bool operator ==(dynamic other) {
-    if (other.runtimeType != runtimeType) return false;
-    final ExtendedFileImageProvider typedOther = other;
-    bool result =
-        file?.path == typedOther.file?.path && scale == typedOther.scale;
-    if (result) {
-      rawImageData ??= typedOther.rawImageData;
+    if (other.runtimeType != runtimeType) {
+      return false;
     }
-    return result;
+    if (other is ExtendedFileImageProvider &&
+        file?.path == other.file?.path &&
+        scale == other.scale) {
+      rawImageData ??= other.rawImageData;
+      return true;
+    }
+    return false;
   }
 
   @override

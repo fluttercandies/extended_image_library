@@ -27,11 +27,11 @@ class ExtendedNetworkImageProvider
     this.url, {
     this.scale = 1.0,
     this.headers,
-    bool cache = false,
-    int retries = 3,
-    Duration timeLimit,
-    Duration timeRetry,
-    CancellationToken cancelToken,
+    this.cache = false,
+    this.retries = 3,
+    this.timeLimit,
+    this.timeRetry,
+    this.cancelToken,
   })  : assert(url != null),
         assert(scale != null);
 
@@ -83,6 +83,7 @@ class ExtendedNetworkImageProvider
     final Uri resolved = Uri.base.resolve(key.url);
     // This API only exists in the web engine implementation and is not
     // contained in the analyzer summary for Flutter.
+    // ignore: return_of_invalid_type,undefined_function
     return ui.webOnlyInstantiateImageCodecFromUrl(
         resolved); // ignore: undefined_function
   }
@@ -92,8 +93,9 @@ class ExtendedNetworkImageProvider
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    final ExtendedNetworkImageProvider typedOther = other;
-    return url == typedOther.url && scale == typedOther.scale;
+    return other is ExtendedNetworkImageProvider &&
+        url == other.url &&
+        scale == other.scale;
   }
 
   @override
@@ -103,19 +105,19 @@ class ExtendedNetworkImageProvider
   String toString() => '$runtimeType("$url", scale: $scale)';
 
   @override
-  bool get cache => null;
+  final bool cache;
 
   @override
-  CancellationToken get cancelToken => null;
+  final CancellationToken cancelToken;
 
   @override
-  get retries => null;
+  final int retries;
 
   @override
-  Duration get timeLimit => null;
+  final Duration timeLimit;
 
   @override
-  Duration get timeRetry => null;
+  final Duration timeRetry;
 
   //not support for web
   @override
@@ -125,5 +127,5 @@ class ExtendedNetworkImageProvider
     return null;
   }
 
-  static get httpClient => null;
+  static dynamic get httpClient => null;
 }

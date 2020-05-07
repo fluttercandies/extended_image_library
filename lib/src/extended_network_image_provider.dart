@@ -25,7 +25,7 @@ abstract class ExtendedNetworkImageProvider
   Duration get timeLimit;
 
   ///the time to retry to request
-  get retries;
+  int get retries;
 
   ///the time duration to retry to request
   Duration get timeRetry;
@@ -55,6 +55,6 @@ abstract class ExtendedNetworkImageProvider
   });
 
   ///HttpClient for network, it's null on web
-  static get httpClient =>
+  static dynamic get httpClient =>
       network_image.ExtendedNetworkImageProvider.httpClient;
 }
