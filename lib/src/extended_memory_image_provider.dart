@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui show Codec;
 import 'package:extended_image_library/src/extended_image_provider.dart';
 import 'package:flutter/widgets.dart';
-import 'dart:ui' as ui show Codec;
+
 
 class ExtendedMemoryImageProvider extends MemoryImage
     with ExtendedImageProvider {
