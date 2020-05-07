@@ -1,3 +1,7 @@
+## [0.2.3]
+
+* fix analysis_options.yaml base on flutter sdk
+  
 ## [0.2.2]
 
 * add analysis_options.yaml
