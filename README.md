@@ -12,6 +12,3 @@ A powerful official extension library of image, which support placeholder(loadin
 
 ![img](https://github.com/fluttercandies/Flutter_Candies/blob/master/gif/extended_image/editor.gif)
 
-# ☕️Buy me a coffee
-
-![img](http://zmtzawqlp.gitee.io/my_images/images/qrcode.png)

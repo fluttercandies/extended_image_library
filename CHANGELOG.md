@@ -1,3 +1,7 @@
+## [0.3.0]
+
+* export http_client_helper
+
 ## [0.2.3]
 
 * fix analysis_options.yaml base on flutter sdk

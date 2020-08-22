@@ -255,14 +255,13 @@ class ExtendedNetworkImageProvider
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    if(other is ExtendedNetworkImageProvider &&
+    if (other is ExtendedNetworkImageProvider &&
         url == other.url &&
-        scale == other.scale)
-        {
-  rawImageData ??= other.rawImageData;
-  return true;
-        }
-  return false;
+        scale == other.scale) {
+      rawImageData ??= other.rawImageData;
+      return true;
+    }
+    return false;
   }
 
   @override
