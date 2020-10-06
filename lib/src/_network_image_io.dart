@@ -31,7 +31,7 @@ class ExtendedNetworkImageProvider
         assert(scale != null),
         cancelToken = cancelToken ?? CancellationToken();
 
-  ///time Limit to request image
+  ///time limit to request image
   @override
   final Duration timeLimit;
 
@@ -106,7 +106,7 @@ class ExtendedNetworkImageProvider
       DecoderCallback decode) async {
     assert(key == this);
     final String md5Key = keyToMd5(key.url);
-    ui.Codec reuslt;
+    ui.Codec result;
     if (cache) {
       try {
         final Uint8List data = await _loadCache(
@@ -115,21 +115,21 @@ class ExtendedNetworkImageProvider
           md5Key,
         );
         if (data != null) {
-          reuslt = await instantiateImageCodec(data, decode);
+          result = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
         print(e);
       }
     }
 
-    if (reuslt == null) {
+    if (result == null) {
       try {
         final Uint8List data = await _loadNetwork(
           key,
           chunkEvents,
         );
         if (data != null) {
-          reuslt = await instantiateImageCodec(data, decode);
+          result = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
         print(e);
@@ -137,12 +137,12 @@ class ExtendedNetworkImageProvider
     }
 
     //Failed to load
-    if (reuslt == null) {
-      //reuslt = await ui.instantiateImageCodec(kTransparentImage);
+    if (result == null) {
+      //result = await ui.instantiateImageCodec(kTransparentImage);
       return Future<ui.Codec>.error(StateError('Failed to load $url.'));
     }
 
-    return reuslt;
+    return result;
   }
 
   ///get the image from cache folder.
@@ -251,7 +251,7 @@ class ExtendedNetworkImageProvider
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator == (dynamic other) {
     if (other.runtimeType != runtimeType) {
       return false;
     }
@@ -311,7 +311,7 @@ class ExtendedNetworkImageProvider
   }
 }
 
-///save netwrok image to photo
+///save network image to photo
 //Future<bool> saveNetworkImageToPhoto(String url, {bool useCache: true}) async {
 //  var data = await getNetworkImageData(url, useCache: useCache);
 //  var filePath = await ImagePickerSaver.saveFile(fileData: data);
