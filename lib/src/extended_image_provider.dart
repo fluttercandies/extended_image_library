@@ -4,13 +4,18 @@ import 'package:flutter/painting.dart';
 
 class ExtendedImageProvider {
   //raw data of image
-  Uint8List rawImageData;
+  Uint8List get rawImageData => imageData.data;
+  final RawImageData imageData = RawImageData();
 
   ///override this method, so that you can handle raw image data,
   ///for example, compress
   Future<ui.Codec> instantiateImageCodec(
       Uint8List data, DecoderCallback decode) async {
-    rawImageData = data;
+    imageData.data = data;
     return await decode(data);
   }
+}
+
+class RawImageData {
+  Uint8List data;
 }

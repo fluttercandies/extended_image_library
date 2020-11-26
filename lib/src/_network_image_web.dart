@@ -53,13 +53,20 @@ class ExtendedNetworkImageProvider
   @override
   ImageStreamCompleter load(
       image_provider.ExtendedNetworkImageProvider key, DecoderCallback decode) {
+    // Ownership of this controller is handed off to [_loadAsync]; it is that
+    // method's responsibility to close the controller's stream when the image
+    // has been loaded or an error is thrown.
+    final StreamController<ImageChunkEvent> chunkEvents =
+        StreamController<ImageChunkEvent>();
+
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
+      codec: _loadAsync(key, decode, chunkEvents),
       scale: key.scale,
 //        informationCollector: (StringBuffer information) {
 //          information.writeln('Image provider: $this');
 //          information.write('Image key: $key');
 //        }
+      chunkEvents: chunkEvents.stream,
       informationCollector: () {
         return <DiagnosticsNode>[
           DiagnosticsProperty<ImageProvider>('Image provider', this),
@@ -76,8 +83,10 @@ class ExtendedNetworkImageProvider
   // Web does not support decoding network images to a specified size. The decode parameter
   // here is ignored and the web-only `ui.webOnlyInstantiateImageCodecFromUrl` will be used
   // directly in place of the typical `instantiateImageCodec` method.
-  Future<ui.Codec> _loadAsync(image_provider.ExtendedNetworkImageProvider key,
-      DecoderCallback decode) async {
+  Future<ui.Codec> _loadAsync(
+      image_provider.ExtendedNetworkImageProvider key,
+      DecoderCallback decode,
+      StreamController<ImageChunkEvent> chunkEvents) async {
     assert(key == this);
 
     final Uri resolved = Uri.base.resolve(key.url);
@@ -85,7 +94,11 @@ class ExtendedNetworkImageProvider
     // contained in the analyzer summary for Flutter.
     // ignore: return_of_invalid_type,undefined_function
     return ui.webOnlyInstantiateImageCodecFromUrl(
-        resolved); // ignore: undefined_function
+        resolved, // ignore: undefined_function
+        chunkCallback: (int bytes, int total) {
+      chunkEvents.add(ImageChunkEvent(
+          cumulativeBytesLoaded: bytes, expectedTotalBytes: total));
+    }) as Future<ui.Codec>; // ignore: undefined_function
   }
 
   @override

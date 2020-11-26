@@ -39,7 +39,7 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     if (other is ExtendedFileImageProvider &&
         file?.path == other.file?.path &&
         scale == other.scale) {
-      rawImageData ??= other.rawImageData;
+      imageData.data ??= other.rawImageData;
       return true;
     }
     return false;
