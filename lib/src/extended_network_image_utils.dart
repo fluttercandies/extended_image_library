@@ -73,6 +73,25 @@ Future<File> getCachedImageFile(String url) async {
   return null;
 }
 
+///check if the image exists in cache
+Future<bool> cachedImageExists(String url) async {
+  try {
+    final String key = keyToMd5(url);
+    final Directory cacheImagesDirectory = Directory(
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+    if (cacheImagesDirectory.existsSync()) {
+      for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
+        if (file.path.endsWith(key)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
 ///clear all of image in memory
 void clearMemoryImageCache() {
   PaintingBinding.instance.imageCache.clear();
