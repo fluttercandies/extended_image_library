@@ -1,105 +1,37 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/painting.dart';
 
+import '_extended_network_image_utils_io.dart'
+    if (dart.library.html) '_extended_network_image_utils_web.dart' as utils;
 import 'extended_network_image_provider.dart';
-
-const String cacheImageFolderName = 'cacheimage';
-
-String keyToMd5(String key) => md5.convert(utf8.encode(key)).toString();
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
 Future<bool> clearDiskCachedImages({Duration duration}) async {
-  try {
-    final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    if (cacheImagesDirectory.existsSync()) {
-      if (duration == null) {
-        cacheImagesDirectory.deleteSync(recursive: true);
-      } else {
-        final DateTime now = DateTime.now();
-        for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
-          final FileStat fs = file.statSync();
-          if (now.subtract(duration).isAfter(fs.changed)) {
-            //print("remove expired cached image");
-            file.deleteSync(recursive: true);
-          }
-        }
-      }
-    }
-  } catch (_) {
-    return false;
-  }
-  return true;
+  return utils.clearDiskCachedImages(duration: duration);
 }
 
 /// clear the disk cache image then return if it succeed.
 ///  <param name="url">clear specific one</param>
 Future<bool> clearDiskCachedImage(String url) async {
-  try {
-    final File file = await getCachedImageFile(url);
-    if (file != null) {
-      await file.delete(recursive: true);
-    }
-  } catch (_) {
-    return false;
-  }
-  return true;
+  return utils.clearDiskCachedImage(url);
 }
 
 ///get the local file of the cached image
-
 Future<File> getCachedImageFile(String url) async {
-  try {
-    final String key = keyToMd5(url);
-    final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    if (cacheImagesDirectory.existsSync()) {
-      for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
-        if (file.path.endsWith(key)) {
-          return File(file.path);
-        }
-      }
-    }
-  } catch (_) {
-    return null;
-  }
-  return null;
+  return utils.getCachedImageFile(url);
 }
 
 ///check if the image exists in cache
 Future<bool> cachedImageExists(String url) async {
-  try {
-    final String key = keyToMd5(url);
-    final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    if (cacheImagesDirectory.existsSync()) {
-      for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
-        if (file.path.endsWith(key)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
+  return utils.cachedImageExists(url);
 }
 
-///clear all of image in memory
-void clearMemoryImageCache() {
-  PaintingBinding.instance.imageCache.clear();
-}
-
-/// get ImageCache
-ImageCache getMemoryImageCache() {
-  return PaintingBinding.instance.imageCache;
+/// get total size of cached image
+Future<int> getCachedSizeBytes() async {
+  return utils.getCachedSizeBytes();
 }
 
 /// get network image data from cached
@@ -111,17 +43,4 @@ Future<Uint8List> getNetworkImageData(
   return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
     chunkEvents: chunkEvents,
   );
-}
-
-/// get total size of cached image
-Future<int> getCachedSizeBytes() async {
-  int size = 0;
-  final Directory cacheImagesDirectory = Directory(
-      join((await getTemporaryDirectory()).path, cacheImageFolderName));
-  if (cacheImagesDirectory.existsSync()) {
-    for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
-      size += file.statSync().size;
-    }
-  }
-  return size;
 }
