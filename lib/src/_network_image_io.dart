@@ -6,10 +6,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'extended_image_provider.dart';
+import 'extended_image_utils.dart';
 import 'extended_network_image_provider.dart' as image_provider;
-import 'extended_network_image_utils.dart';
+import '_extended_network_image_utils_io.dart'
+    if (dart.library.html) '_extended_network_image_utils_web.dart'
+    as network_utils;
 
 class ExtendedNetworkImageProvider
     extends ImageProvider<image_provider.ExtendedNetworkImageProvider>
@@ -105,14 +107,13 @@ class ExtendedNetworkImageProvider
       StreamController<ImageChunkEvent> chunkEvents,
       DecoderCallback decode) async {
     assert(key == this);
-    final String md5Key = keyToMd5(key.url);
     ui.Codec result;
     if (cache) {
       try {
         final Uint8List data = await _loadCache(
           key,
           chunkEvents,
-          md5Key,
+          key.url,
         );
         if (data != null) {
           result = await instantiateImageCodec(data, decode);
@@ -149,21 +150,14 @@ class ExtendedNetworkImageProvider
   Future<Uint8List> _loadCache(
     ExtendedNetworkImageProvider key,
     StreamController<ImageChunkEvent> chunkEvents,
-    String md5Key,
+    String url,
   ) async {
-    final Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    //exist, try to find cache image file
-    if (_cacheImagesDirectory.existsSync()) {
-      final File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
-      if (cacheFlie.existsSync()) {
-        return await cacheFlie.readAsBytes();
-      }
+    final GetOrSetCacheImageResult result =
+        await network_utils.getOrSetCachedImageFile(url);
+    if (result.data != null) {
+      return result.data;
     }
-    //create folder
-    else {
-      await _cacheImagesDirectory.create();
-    }
+
     //load from network
     final Uint8List data = await _loadNetwork(
       key,
@@ -171,7 +165,7 @@ class ExtendedNetworkImageProvider
     );
     if (data != null) {
       //cache image file
-      await File(join(_cacheImagesDirectory.path, md5Key)).writeAsBytes(data);
+      result?.save(data);
       return data;
     }
 

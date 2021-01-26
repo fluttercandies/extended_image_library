@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -48,7 +49,6 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-
 Future<File> getCachedImageFile(String url) async {
   try {
     final String key = keyToMd5(url);
@@ -65,6 +65,33 @@ Future<File> getCachedImageFile(String url) async {
     return null;
   }
   return null;
+}
+
+/// Getting cache data, if cache empty - callback with save
+Future<GetOrSetCacheImageResult> getOrSetCachedImage(String url) async {
+  try {
+    final String key = keyToMd5(url);
+    final Directory cacheImagesDirectory = Directory(
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+
+    final File cacheFile = File(join(cacheImagesDirectory.path, key));
+    //exist, try to find cache image file
+    if (cacheFile.existsSync()) {
+      return GetOrSetCacheImageResult()..data = await cacheFile.readAsBytes();
+    } else {
+      return GetOrSetCacheImageResult()
+        ..save = (Uint8List data) async {
+          //create folder
+          if (!cacheImagesDirectory.existsSync()) {
+            await cacheImagesDirectory.create();
+          }
+
+          return cacheFile.writeAsBytes(data);
+        };
+    }
+  } catch (_) {
+    return GetOrSetCacheImageResult();
+  }
 }
 
 ///check if the image exists in cache

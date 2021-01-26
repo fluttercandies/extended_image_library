@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 
 import '_extended_network_image_utils_io.dart'
     if (dart.library.html) '_extended_network_image_utils_web.dart' as utils;
+import 'extended_image_utils.dart';
 import 'extended_network_image_provider.dart';
 
 /// clear the disk cache directory then return if it succeed.
@@ -22,6 +23,11 @@ Future<bool> clearDiskCachedImage(String url) async {
 ///get the local file of the cached image
 Future<File> getCachedImageFile(String url) async {
   return utils.getCachedImageFile(url);
+}
+
+/// Getting cache data, if cache empty - callback with save
+Future<GetOrSetCacheImageResult> getOrSetCachedImage(String url) async {
+  return utils.getOrSetCachedImage(url);
 }
 
 ///check if the image exists in cache

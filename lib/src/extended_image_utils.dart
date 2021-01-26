@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/painting.dart';
 
@@ -12,4 +13,10 @@ void clearMemoryImageCache() {
 /// get ImageCache
 ImageCache getMemoryImageCache() {
   return PaintingBinding.instance.imageCache;
+}
+
+/// get or set image cache result for image provider
+class GetOrSetCacheImageResult {
+  Uint8List data;
+  Future<void> Function(Uint8List data) save = (_) async {};
 }

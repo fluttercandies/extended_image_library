@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'extended_image_utils.dart';
+
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
 Future<bool> clearDiskCachedImages({Duration duration}) async {
@@ -17,6 +19,10 @@ Future<bool> clearDiskCachedImage(String url) async {
 
 Future<File> getCachedImageFile(String url) async {
   return null;
+}
+
+Future<GetOrSetCacheImageResult> getOrSetCachedImage(String url) async {
+  return GetOrSetCacheImageResult();
 }
 
 ///check if the image exists in cache
