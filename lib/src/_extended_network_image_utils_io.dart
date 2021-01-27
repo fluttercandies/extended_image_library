@@ -38,7 +38,8 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 ///  <param name="url">clear specific one</param>
 Future<bool> clearDiskCachedImage(String url) async {
   try {
-    final File file = await getCachedImageFile(url);
+    final String filePath = await getCachedImageFilePath(url);
+    final File file = File(filePath);
     if (file != null) {
       await file.delete(recursive: true);
     }
@@ -49,7 +50,7 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-Future<File> getCachedImageFile(String url) async {
+Future<String> getCachedImageFilePath(String url) async {
   try {
     final String key = keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
@@ -57,7 +58,7 @@ Future<File> getCachedImageFile(String url) async {
     if (cacheImagesDirectory.existsSync()) {
       for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
         if (file.path.endsWith(key)) {
-          return File(file.path);
+          return file.path;
         }
       }
     }

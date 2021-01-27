@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'extended_image_utils.dart';
 
@@ -16,11 +15,11 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-
-Future<File> getCachedImageFile(String url) async {
+Future<String> getCachedImageFilePath(String url) async {
   return null;
 }
 
+/// Getting cache data, if cache empty - callback with save
 Future<GetOrSetCacheImageResult> getOrSetCachedImage(String url) async {
   return GetOrSetCacheImageResult();
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/painting.dart';
 
@@ -21,8 +20,8 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-Future<File> getCachedImageFile(String url) async {
-  return utils.getCachedImageFile(url);
+Future<String> getCachedImageFilePath(String url) async {
+  return utils.getCachedImageFilePath(url);
 }
 
 /// Getting cache data, if cache empty - callback with save
