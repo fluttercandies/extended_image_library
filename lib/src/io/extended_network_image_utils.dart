@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'extended_image_utils.dart';
+import '../extended_image_utils.dart';
 
 const String cacheImageFolderName = 'cacheimage';
 

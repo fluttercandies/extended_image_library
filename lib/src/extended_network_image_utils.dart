@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/painting.dart';
 
-import '_extended_network_image_utils_io.dart'
-    if (dart.library.html) '_extended_network_image_utils_web.dart' as utils;
 import 'extended_image_utils.dart';
 import 'extended_network_image_provider.dart';
+import 'io/extended_network_image_utils.dart'
+    if (dart.library.html) '_extended_network_image_utils_web.dart' as utils;
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>

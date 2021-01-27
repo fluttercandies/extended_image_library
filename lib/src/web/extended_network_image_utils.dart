@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'extended_image_utils.dart';
+import '../extended_image_utils.dart';
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>

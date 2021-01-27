@@ -9,9 +9,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import 'extended_image_provider.dart';
+import '../extended_image_provider.dart';
 
-import 'extended_network_image_provider.dart' as image_provider;
+import '../extended_network_image_provider.dart' as image_provider;
 
 /// The dart:html implementation of [image_provider.NetworkImage].
 ///

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import '_network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
+import 'io/network_image.dart' if (dart.library.html) '_network_image_web.dart'
     as network_image;
 
 abstract class ExtendedNetworkImageProvider

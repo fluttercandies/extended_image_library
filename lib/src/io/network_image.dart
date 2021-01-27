@@ -5,12 +5,12 @@ import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import '_extended_network_image_utils_io.dart'
+import '../extended_image_provider.dart';
+import '../extended_image_utils.dart';
+import '../extended_network_image_provider.dart' as image_provider;
+import 'extended_network_image_utils.dart'
     if (dart.library.html) '_extended_network_image_utils_web.dart'
     as network_utils;
-import 'extended_image_provider.dart';
-import 'extended_image_utils.dart';
-import 'extended_network_image_provider.dart' as image_provider;
 
 class ExtendedNetworkImageProvider
     extends ImageProvider<image_provider.ExtendedNetworkImageProvider>
