@@ -1,6 +1,11 @@
+## 0.4.0-nullsafety.1
+
+* Migrate to non-nullable by default.
+
 ## 0.3.1
 
 * support chunkEvents for network web
+
 ## 0.3.0
 
 * export http_client_helper
