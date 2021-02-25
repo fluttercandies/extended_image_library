@@ -6,28 +6,25 @@ import 'package:flutter/widgets.dart';
 import 'extended_image_provider.dart';
 
 class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
-  ExtendedFileImageProvider(File file, {double scale = 1.0})
-      : super(file, scale: scale);
+  ExtendedFileImageProvider(
+    File file, {
+    double scale = 1.0,
+  }) : super(file, scale: scale);
+
   @override
   ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
-        yield ErrorDescription('Path: ${file?.path}');
+        yield ErrorDescription('Path: ${file.path}');
       },
     );
   }
 
   Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
     assert(key == this);
-
     final Uint8List bytes = await file.readAsBytes();
-
-    if (bytes.lengthInBytes == 0) {
-      return null;
-    }
-
     return await instantiateImageCodec(bytes, decode);
   }
 
@@ -37,7 +34,7 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
       return false;
     }
     if (other is ExtendedFileImageProvider &&
-        file?.path == other.file?.path &&
+        file.path == other.file.path &&
         scale == other.scale) {
       imageData.data ??= other.rawImageData;
       return true;
@@ -46,5 +43,5 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
   }
 
   @override
-  int get hashCode => hashValues(file?.path, scale);
+  int get hashCode => hashValues(file.path, scale);
 }
