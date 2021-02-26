@@ -16,6 +16,7 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
+      debugLabel: key.file.path,
       informationCollector: () sync* {
         yield ErrorDescription('Path: ${file.path}');
       },
@@ -24,7 +25,15 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
 
   Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
     assert(key == this);
+
     final Uint8List bytes = await file.readAsBytes();
+
+    if (bytes.lengthInBytes == 0) {
+      // The file may become available later.
+      PaintingBinding.instance!.imageCache!.evict(key);
+      throw StateError('$file is empty and cannot be loaded as an image.');
+    }
+
     return await instantiateImageCodec(bytes, decode);
   }
 
