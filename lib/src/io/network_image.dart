@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http_client_helper/http_client_helper.dart';
@@ -27,24 +28,24 @@ class ExtendedNetworkImageProvider
     this.retries = 3,
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
-    CancellationToken cancelToken,
+    CancellationToken? cancelToken,
   })  : assert(url != null),
         assert(scale != null),
         cancelToken = cancelToken ?? CancellationToken();
 
-  ///time limit to request image
+  /// Time limit to request image
   @override
-  final Duration timeLimit;
+  final Duration? timeLimit;
 
-  ///the time to retry to request
+  /// The time to retry to request
   @override
   final int retries;
 
-  ///the time duration to retry to request
+  /// The time duration to retry to request
   @override
-  final Duration timeRetry;
+  final Duration? timeRetry;
 
-  ///whether cache image to local
+  /// Whether cache image to local
   @override
   final bool cache;
 
@@ -58,19 +59,17 @@ class ExtendedNetworkImageProvider
 
   /// The HTTP headers that will be used with [HttpClient.get] to fetch image from network.
   @override
-  final Map<String, String> headers;
+  final Map<String, String>? headers;
 
-  ///token to cancel network request
+  /// Token to cancel network request
   @override
-  final CancellationToken cancelToken;
-
-//  /// cancel network request by extended image
-//  /// if false, cancel by user
-//  final bool autoCancel;
+  final CancellationToken? cancelToken;
 
   @override
   ImageStreamCompleter load(
-      image_provider.ExtendedNetworkImageProvider key, DecoderCallback decode) {
+    image_provider.ExtendedNetworkImageProvider key,
+    DecoderCallback decode,
+  ) {
     // Ownership of this controller is handed off to [_loadAsync]; it is that
     // method's responsibility to close the controller's stream when the image
     // has been loaded or an error is thrown.
@@ -89,7 +88,9 @@ class ExtendedNetworkImageProvider
         return <DiagnosticsNode>[
           DiagnosticsProperty<ImageProvider>('Image provider', this),
           DiagnosticsProperty<image_provider.ExtendedNetworkImageProvider>(
-              'Image key', key),
+            'Image key',
+            key,
+          ),
         ];
       },
     );
@@ -97,19 +98,21 @@ class ExtendedNetworkImageProvider
 
   @override
   Future<ExtendedNetworkImageProvider> obtainKey(
-      ImageConfiguration configuration) {
+    ImageConfiguration configuration,
+  ) {
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
   Future<ui.Codec> _loadAsync(
-      ExtendedNetworkImageProvider key,
-      StreamController<ImageChunkEvent> chunkEvents,
-      DecoderCallback decode) async {
+    ExtendedNetworkImageProvider key,
+    StreamController<ImageChunkEvent> chunkEvents,
+    DecoderCallback decode,
+  ) async {
     assert(key == this);
-    ui.Codec result;
+    ui.Codec? result;
     if (cache) {
       try {
-        final Uint8List data = await _loadCache(
+        final Uint8List? data = await _loadCache(
           key,
           chunkEvents,
           key.url,
@@ -124,7 +127,7 @@ class ExtendedNetworkImageProvider
 
     if (result == null) {
       try {
-        final Uint8List data = await _loadNetwork(
+        final Uint8List? data = await _loadNetwork(
           key,
           chunkEvents,
         );
@@ -136,7 +139,7 @@ class ExtendedNetworkImageProvider
       }
     }
 
-    //Failed to load
+    // Failed to load
     if (result == null) {
       //result = await ui.instantiateImageCodec(kTransparentImage);
       return Future<ui.Codec>.error(StateError('Failed to load $url.'));
@@ -145,20 +148,20 @@ class ExtendedNetworkImageProvider
     return result;
   }
 
-  ///get the image from cache folder.
-  Future<Uint8List> _loadCache(
+  /// Get the image from cache folder.
+  Future<Uint8List?> _loadCache(
     ExtendedNetworkImageProvider key,
-    StreamController<ImageChunkEvent> chunkEvents,
+    StreamController<ImageChunkEvent>? chunkEvents,
     String url,
   ) async {
-    final GetOrSetCacheImageResult result =
+    final GetOrSetCacheImageResult? result =
         await network_utils.getOrSetCachedImage(url);
-    if (result.data != null) {
-      return result.data;
+    if (result?.data != null) {
+      return result!.data;
     }
 
     //load from network
-    final Uint8List data = await _loadNetwork(
+    final Uint8List? data = await _loadNetwork(
       key,
       chunkEvents,
     );
@@ -171,32 +174,35 @@ class ExtendedNetworkImageProvider
     return null;
   }
 
-  /// get the image from network.
-  Future<Uint8List> _loadNetwork(
+  /// Get the image from network.
+  Future<Uint8List?> _loadNetwork(
     ExtendedNetworkImageProvider key,
-    StreamController<ImageChunkEvent> chunkEvents,
+    StreamController<ImageChunkEvent>? chunkEvents,
   ) async {
     try {
       final Uri resolved = Uri.base.resolve(key.url);
-      final HttpClientResponse response = await _tryGetResponse(resolved);
-      if (response.statusCode != HttpStatus.ok) {
+      final HttpClientResponse? response = await _tryGetResponse(resolved);
+      if (response == null || response.statusCode != HttpStatus.ok) {
         return null;
       }
 
       final Uint8List bytes = await consolidateHttpClientResponseBytes(
         response,
         onBytesReceived: chunkEvents != null
-            ? (int cumulative, int total) {
-                chunkEvents.add(ImageChunkEvent(
-                  cumulativeBytesLoaded: cumulative,
-                  expectedTotalBytes: total,
-                ));
+            ? (int cumulative, int? total) {
+                chunkEvents.add(
+                  ImageChunkEvent(
+                    cumulativeBytesLoaded: cumulative,
+                    expectedTotalBytes: total,
+                  ),
+                );
               }
             : null,
       );
       if (bytes.lengthInBytes == 0) {
         return Future<Uint8List>.error(
-            StateError('NetworkImage is an empty file: $resolved'));
+          StateError('NetworkImage is an empty file: $resolved'),
+        );
       }
 
       return bytes;
@@ -218,15 +224,13 @@ class ExtendedNetworkImageProvider
     });
     final HttpClientResponse response = await request.close();
     if (timeLimit != null) {
-      response?.timeout(
-        timeLimit,
-      );
+      response.timeout(timeLimit!);
     }
     return response;
   }
 
-  //http get with cancel, delay try again
-  Future<HttpClientResponse> _tryGetResponse(
+  // Http get with cancel, delay try again
+  Future<HttpClientResponse?> _tryGetResponse(
     Uri resolved,
   ) async {
     cancelToken?.throwIfCancellationRequested();
@@ -265,24 +269,17 @@ class ExtendedNetworkImageProvider
 
   @override
 
-  ///get network image data from cached
-  Future<Uint8List> getNetworkImageData({
-    StreamController<ImageChunkEvent> chunkEvents,
+  /// Get network image data from cached
+  Future<Uint8List?> getNetworkImageData({
+    StreamController<ImageChunkEvent>? chunkEvents,
   }) async {
     final String uId = keyToMd5(url);
 
     if (cache) {
-      return await _loadCache(
-        this,
-        chunkEvents,
-        uId,
-      );
+      return await _loadCache(this, chunkEvents, uId);
     }
 
-    return await _loadNetwork(
-      this,
-      chunkEvents,
-    );
+    return await _loadNetwork(this, chunkEvents);
   }
 
   // Do not access this field directly; use [_httpClient] instead.
@@ -296,17 +293,10 @@ class ExtendedNetworkImageProvider
     HttpClient client = _sharedHttpClient;
     assert(() {
       if (debugNetworkImageHttpClientProvider != null) {
-        client = debugNetworkImageHttpClientProvider();
+        client = debugNetworkImageHttpClientProvider!();
       }
       return true;
     }());
     return client;
   }
 }
-
-///save network image to photo
-//Future<bool> saveNetworkImageToPhoto(String url, {bool useCache: true}) async {
-//  var data = await getNetworkImageData(url, useCache: useCache);
-//  var filePath = await ImagePickerSaver.saveFile(fileData: data);
-//  return filePath != null && filePath != "";
-//}

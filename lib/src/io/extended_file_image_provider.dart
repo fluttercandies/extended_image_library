@@ -13,8 +13,9 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
+      debugLabel: key.file.path,
       informationCollector: () sync* {
-        yield ErrorDescription('Path: ${file?.path}');
+        yield ErrorDescription('Path: ${file.path}');
       },
     );
   }
@@ -25,7 +26,8 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     final Uint8List bytes = await file.readAsBytes();
 
     if (bytes.lengthInBytes == 0) {
-      return null;
+      PaintingBinding.instance!.imageCache!.evict(key);
+      throw StateError('$file is empty and cannot be loaded as an image.');
     }
 
     return await instantiateImageCodec(bytes, decode);
@@ -37,7 +39,7 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
       return false;
     }
     if (other is ExtendedFileImageProvider &&
-        file?.path == other.file?.path &&
+        file.path == other.file.path &&
         scale == other.scale) {
       imageData.data ??= other.rawImageData;
       return true;
@@ -46,5 +48,5 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
   }
 
   @override
-  int get hashCode => hashValues(file?.path, scale);
+  int get hashCode => hashValues(file.path, scale);
 }

@@ -9,7 +9,7 @@ import 'io/extended_network_image_utils.dart'
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
-Future<bool> clearDiskCachedImages({Duration duration}) async {
+Future<bool> clearDiskCachedImages({Duration? duration}) async {
   return utils.clearDiskCachedImages(duration: duration);
 }
 
@@ -20,7 +20,7 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-Future<String> getCachedImageFilePath(String url) async {
+Future<String?> getCachedImageFilePath(String url) async {
   return utils.getCachedImageFilePath(url);
 }
 
@@ -40,10 +40,10 @@ Future<int> getCachedSizeBytes() async {
 }
 
 /// get network image data from cached
-Future<Uint8List> getNetworkImageData(
+Future<Uint8List?> getNetworkImageData(
   String url, {
   bool useCache = true,
-  StreamController<ImageChunkEvent> chunkEvents,
+  StreamController<ImageChunkEvent>? chunkEvents,
 }) async {
   return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
     chunkEvents: chunkEvents,

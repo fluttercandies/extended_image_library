@@ -11,20 +11,23 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     with ExtendedImageProvider {
   ExtendedExactAssetImageProvider(
     String assetName, {
-    AssetBundle bundle,
-    String package,
+    AssetBundle? bundle,
+    String? package,
     double scale = 1.0,
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
-  ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
+
+  late final ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
+
   @override
   Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
     final Completer<ExtendedAssetBundleImageKey> completer =
         Completer<ExtendedAssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      if (value != null) {
-        _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
-            bundle: value.bundle, scale: value.scale, name: value.name);
-      }
+      _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
+        bundle: value.bundle,
+        scale: value.scale,
+        name: value.name,
+      );
       completer.complete(_extendedAssetBundleImageKey);
     });
     return completer.future;
@@ -48,7 +51,9 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderCallback decode) async {
+    AssetBundleImageKey key,
+    DecoderCallback decode,
+  ) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) {
       throw 'Unable to read data';
@@ -59,26 +64,29 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   }
 
   @override
-  Uint8List get rawImageData =>
-      super.rawImageData ?? _extendedAssetBundleImageKey?.data?.value;
+  Uint8List? get rawImageData =>
+      super.rawImageData ?? _extendedAssetBundleImageKey.data.value;
 }
 
 class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   ExtendedAssetImageProvider(
     String assetName, {
-    AssetBundle bundle,
-    String package,
+    AssetBundle? bundle,
+    String? package,
   }) : super(assetName, bundle: bundle, package: package);
-  ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
+
+  late final ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
+
   @override
   Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
     final Completer<ExtendedAssetBundleImageKey> completer =
         Completer<ExtendedAssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      if (value != null) {
-        _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
-            bundle: value.bundle, scale: value.scale, name: value.name);
-      }
+      _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
+        bundle: value.bundle,
+        scale: value.scale,
+        name: value.name,
+      );
       completer.complete(_extendedAssetBundleImageKey);
     });
     return completer.future;
@@ -102,7 +110,9 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderCallback decode) async {
+    AssetBundleImageKey key,
+    DecoderCallback decode,
+  ) async {
     final ByteData data = await key.bundle.load(key.name);
     if (data == null) {
       throw 'Unable to read data';
@@ -113,21 +123,22 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   }
 
   @override
-  Uint8List get rawImageData =>
-      super.rawImageData ?? _extendedAssetBundleImageKey?.data?.value;
+  Uint8List? get rawImageData =>
+      super.rawImageData ?? _extendedAssetBundleImageKey.data.value;
 }
 
 class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   ExtendedAssetBundleImageKey({
-    @required AssetBundle bundle,
-    @required String name,
-    @required double scale,
-  })  : data = _Data(),
+    required AssetBundle bundle,
+    required String name,
+    required double scale,
+  })   : data = _Data(),
         assert(bundle != null),
         assert(name != null),
         assert(scale != null),
         super(bundle: bundle, name: name, scale: scale);
   final _Data data;
+
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) {
@@ -150,5 +161,6 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
 
 class _Data {
   _Data();
-  Uint8List value;
+
+  Uint8List? value;
 }

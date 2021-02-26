@@ -13,22 +13,22 @@ abstract class ExtendedNetworkImageProvider
   factory ExtendedNetworkImageProvider(
     String url, {
     double scale,
-    Map<String, String> headers,
+    Map<String, String>? headers,
     bool cache,
     int retries,
-    Duration timeLimit,
-    Duration timeRetry,
-    CancellationToken cancelToken,
+    Duration? timeLimit,
+    Duration? timeRetry,
+    CancellationToken? cancelToken,
   }) = network_image.ExtendedNetworkImageProvider;
 
   ///time Limit to request image
-  Duration get timeLimit;
+  Duration? get timeLimit;
 
   ///the time to retry to request
   int get retries;
 
   ///the time duration to retry to request
-  Duration get timeRetry;
+  Duration? get timeRetry;
 
   ///whether cache image to local
   bool get cache;
@@ -40,21 +40,23 @@ abstract class ExtendedNetworkImageProvider
   double get scale;
 
   /// The HTTP headers that will be used with [HttpClient.get] to fetch image from network.
-  Map<String, String> get headers;
+  Map<String, String>? get headers;
 
   ///token to cancel network request
-  CancellationToken get cancelToken;
+  CancellationToken? get cancelToken;
 
   @override
   ImageStreamCompleter load(
-      ExtendedNetworkImageProvider key, DecoderCallback decode);
+    ExtendedNetworkImageProvider key,
+    DecoderCallback decode,
+  );
 
   ///get network image data from cached
-  Future<Uint8List> getNetworkImageData({
-    StreamController<ImageChunkEvent> chunkEvents,
+  Future<Uint8List?> getNetworkImageData({
+    StreamController<ImageChunkEvent>? chunkEvents,
   });
 
   ///HttpClient for network, it's null on web
-  static dynamic get httpClient =>
+  static dynamic? get httpClient =>
       network_image.ExtendedNetworkImageProvider.httpClient;
 }

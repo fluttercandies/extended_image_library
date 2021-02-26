@@ -10,7 +10,7 @@ const String cacheImageFolderName = 'cacheimage';
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
-Future<bool> clearDiskCachedImages({Duration duration}) async {
+Future<bool> clearDiskCachedImages({Duration? duration}) async {
   try {
     final Directory cacheImagesDirectory = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
@@ -38,9 +38,9 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 ///  <param name="url">clear specific one</param>
 Future<bool> clearDiskCachedImage(String url) async {
   try {
-    final String filePath = await getCachedImageFilePath(url);
-    final File file = File(filePath);
-    if (file != null) {
+    final String? filePath = await getCachedImageFilePath(url);
+    if (filePath != null) {
+      final File file = File(filePath);
       await file.delete(recursive: true);
     }
   } catch (_) {
@@ -50,7 +50,7 @@ Future<bool> clearDiskCachedImage(String url) async {
 }
 
 ///get the local file of the cached image
-Future<String> getCachedImageFilePath(String url) async {
+Future<String?> getCachedImageFilePath(String url) async {
   try {
     final String key = keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
@@ -87,7 +87,7 @@ Future<GetOrSetCacheImageResult> getOrSetCachedImage(String url) async {
             await cacheImagesDirectory.create();
           }
 
-          return cacheFile.writeAsBytes(data);
+          await cacheFile.writeAsBytes(data);
         };
     }
   } catch (_) {

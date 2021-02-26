@@ -5,8 +5,10 @@ import 'extended_image_provider.dart';
 
 class ExtendedMemoryImageProvider extends MemoryImage
     with ExtendedImageProvider {
-  ExtendedMemoryImageProvider(Uint8List bytes, {double scale = 1.0})
-      : super(bytes, scale: scale);
+  ExtendedMemoryImageProvider(
+    Uint8List bytes, {
+    double scale = 1.0,
+  }) : super(bytes, scale: scale);
 
   @override
   ImageStreamCompleter load(MemoryImage key, DecoderCallback decode) {
