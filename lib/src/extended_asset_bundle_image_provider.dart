@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 
 import 'extended_image_provider.dart';
 
+// ignore: must_be_immutable
 class ExtendedExactAssetImageProvider extends ExactAssetImage
     with ExtendedImageProvider {
   ExtendedExactAssetImageProvider(
@@ -16,7 +17,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     double scale = 1.0,
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
 
-  late final ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
+  late ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
 
   @override
   Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
@@ -135,6 +136,7 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
         assert(name != null),
         assert(scale != null),
         super(bundle: bundle, name: name, scale: scale);
+
   final _Data data;
 
   @override
