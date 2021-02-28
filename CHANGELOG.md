@@ -1,3 +1,7 @@
+## 1.0.1
+
+* add cache key for utils
+
 ## 1.0.0
 
 * fix web capability at pub.dev

@@ -2,12 +2,12 @@ import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/painting.dart';
 
-/// cache raw image data for edit
+/// The cached raw image data
 Map<ExtendedImageProvider<dynamic>, Uint8List> rawImageDataMap =
     <ExtendedImageProvider<dynamic>, Uint8List>{};
 
 mixin ExtendedImageProvider<T> on ImageProvider<T> {
-  //raw data of image
+  // raw data of image
   Uint8List get rawImageData {
     final Uint8List raw = rawImageDataMap[this];
     assert(
@@ -17,14 +17,15 @@ mixin ExtendedImageProvider<T> on ImageProvider<T> {
     return raw;
   }
 
-  ///override this method, so that you can handle raw image data,
-  ///for example, compress
+  /// Override this method, so that you can handle raw image data,
+  /// For example, compress
   Future<ui.Codec> instantiateImageCodec(
       Uint8List data, DecoderCallback decode) async {
     rawImageDataMap[this] = data;
     return await decode(data);
   }
 
+  /// Evicts an entry from the image cache.
   @override
   Future<bool> evict(
       {ImageCache cache,

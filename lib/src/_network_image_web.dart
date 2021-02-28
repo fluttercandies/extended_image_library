@@ -63,10 +63,6 @@ class ExtendedNetworkImageProvider
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode, chunkEvents),
       scale: key.scale,
-//        informationCollector: (StringBuffer information) {
-//          information.writeln('Image provider: $this');
-//          information.write('Image key: $key');
-//        }
       chunkEvents: chunkEvents.stream,
       informationCollector: () {
         return <DiagnosticsNode>[
@@ -94,12 +90,11 @@ class ExtendedNetworkImageProvider
     // This API only exists in the web engine implementation and is not
     // contained in the analyzer summary for Flutter.
     // ignore: return_of_invalid_type,undefined_function
-    return ui.webOnlyInstantiateImageCodecFromUrl(
-        resolved, // ignore: undefined_function
+    return ui.webOnlyInstantiateImageCodecFromUrl(resolved,
         chunkCallback: (int bytes, int total) {
       chunkEvents.add(ImageChunkEvent(
           cumulativeBytesLoaded: bytes, expectedTotalBytes: total));
-    }) as Future<ui.Codec>; // ignore: undefined_function
+    }) as Future<ui.Codec>;
   }
 
   @override
@@ -136,7 +131,7 @@ class ExtendedNetworkImageProvider
   @override
   final String cacheKey;
 
-  //not support for web
+  // not support on web
   @override
   Future<Uint8List> getNetworkImageData({
     StreamController<ImageChunkEvent> chunkEvents,

@@ -10,32 +10,32 @@ Future<bool> clearDiskCachedImages({Duration duration}) async {
 
 /// clear the disk cache image then return if it succeed.
 ///  <param name="url">clear specific one</param>
-Future<bool> clearDiskCachedImage(String url) async {
+Future<bool> clearDiskCachedImage(String url, {String cacheKey}) async {
   assert(false, 'not support on web');
   return false;
 }
 
-///get the local file of the cached image
+/// Get the local file of the cached image
 
-Future<File> getCachedImageFile(String url) async {
+Future<File> getCachedImageFile(String url, {String cacheKey}) async {
   assert(false, 'not support on web');
   return null;
 }
 
-///check if the image exists in cache
-Future<bool> cachedImageExists(String url) async {
+/// Check if the image exists in cache
+Future<bool> cachedImageExists(String url, {String cacheKey}) async {
   assert(false, 'not support on web');
   return false;
 }
 
-/// get total size of cached image
+/// Get total size of cached image
 Future<int> getCachedSizeBytes() async {
   assert(false, 'not support on web');
   return 0;
 }
 
 /// Get the local file path of the cached image
-Future<String> getCachedImageFilePath(String url) async {
+Future<String> getCachedImageFilePath(String url, {String cacheKey}) async {
   assert(false, 'not support on web');
   return null;
 }

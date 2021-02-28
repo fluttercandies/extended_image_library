@@ -32,19 +32,19 @@ class ExtendedNetworkImageProvider
         assert(scale != null),
         cancelToken = cancelToken ?? CancellationToken();
 
-  ///time limit to request image
+  /// The time limit to request image
   @override
   final Duration timeLimit;
 
-  ///the time to retry to request
+  /// The time to retry to request
   @override
   final int retries;
 
-  ///the time duration to retry to request
+  /// The time duration to retry to request
   @override
   final Duration timeRetry;
 
-  ///whether cache image to local
+  /// Whether cache image to local
   @override
   final bool cache;
 
@@ -60,7 +60,7 @@ class ExtendedNetworkImageProvider
   @override
   final Map<String, String> headers;
 
-  ///token to cancel network request
+  /// The token to cancel network request
   @override
   final CancellationToken cancelToken;
 
@@ -146,7 +146,7 @@ class ExtendedNetworkImageProvider
     return result;
   }
 
-  ///get the image from cache folder.
+  /// Get the image from cache folder.
   Future<Uint8List> _loadCache(
     ExtendedNetworkImageProvider key,
     StreamController<ImageChunkEvent> chunkEvents,
@@ -154,24 +154,24 @@ class ExtendedNetworkImageProvider
   ) async {
     final Directory _cacheImagesDirectory = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    //exist, try to find cache image file
+    // exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
       final File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
       if (cacheFlie.existsSync()) {
         return await cacheFlie.readAsBytes();
       }
     }
-    //create folder
+    // create folder
     else {
       await _cacheImagesDirectory.create();
     }
-    //load from network
+    // load from network
     final Uint8List data = await _loadNetwork(
       key,
       chunkEvents,
     );
     if (data != null) {
-      //cache image file
+      // cache image file
       await File(join(_cacheImagesDirectory.path, md5Key)).writeAsBytes(data);
       return data;
     }
@@ -179,7 +179,7 @@ class ExtendedNetworkImageProvider
     return null;
   }
 
-  /// get the image from network.
+  /// Get the image from network.
   Future<Uint8List> _loadNetwork(
     ExtendedNetworkImageProvider key,
     StreamController<ImageChunkEvent> chunkEvents,
@@ -235,7 +235,7 @@ class ExtendedNetworkImageProvider
     return response;
   }
 
-  //http get with cancel, delay try again
+  // Http get with cancel, delay try again
   Future<HttpClientResponse> _tryGetResponse(
     Uri resolved,
   ) async {
@@ -274,7 +274,7 @@ class ExtendedNetworkImageProvider
 
   @override
 
-  ///get network image data from cached
+  /// Get network image data from cached
   Future<Uint8List> getNetworkImageData({
     StreamController<ImageChunkEvent> chunkEvents,
   }) async {
@@ -312,10 +312,3 @@ class ExtendedNetworkImageProvider
     return client;
   }
 }
-
-///save network image to photo
-//Future<bool> saveNetworkImageToPhoto(String url, {bool useCache: true}) async {
-//  var data = await getNetworkImageData(url, useCache: useCache);
-//  var filePath = await ImagePickerSaver.saveFile(fileData: data);
-//  return filePath != null && filePath != "";
-//}
