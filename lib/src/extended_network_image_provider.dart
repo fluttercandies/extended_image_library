@@ -19,18 +19,19 @@ abstract class ExtendedNetworkImageProvider
     Duration timeLimit,
     Duration timeRetry,
     CancellationToken cancelToken,
+    String cacheKey,
   }) = network_image.ExtendedNetworkImageProvider;
 
-  ///time Limit to request image
+  /// Time Limit to request image
   Duration get timeLimit;
 
-  ///the time to retry to request
+  /// The time to retry to request
   int get retries;
 
-  ///the time duration to retry to request
+  /// The time duration to retry to request
   Duration get timeRetry;
 
-  ///whether cache image to local
+  /// Whether cache image to local
   bool get cache;
 
   /// The URL from which the image will be fetched.
@@ -42,8 +43,11 @@ abstract class ExtendedNetworkImageProvider
   /// The HTTP headers that will be used with [HttpClient.get] to fetch image from network.
   Map<String, String> get headers;
 
-  ///token to cancel network request
+  /// Token to cancel network request
   CancellationToken get cancelToken;
+
+  /// Custom cache key
+  String get cacheKey;
 
   @override
   ImageStreamCompleter load(

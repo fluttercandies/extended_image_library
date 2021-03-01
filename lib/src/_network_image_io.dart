@@ -9,11 +9,11 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'extended_image_provider.dart';
 import 'extended_network_image_provider.dart' as image_provider;
-import 'extended_network_image_utils.dart';
+import 'platform.dart';
 
 class ExtendedNetworkImageProvider
     extends ImageProvider<image_provider.ExtendedNetworkImageProvider>
-    with ExtendedImageProvider
+    with ExtendedImageProvider<image_provider.ExtendedNetworkImageProvider>
     implements image_provider.ExtendedNetworkImageProvider {
   /// Creates an object that fetches the image at the given URL.
   ///
@@ -27,6 +27,7 @@ class ExtendedNetworkImageProvider
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
     CancellationToken cancelToken,
+    this.cacheKey,
   })  : assert(url != null),
         assert(scale != null),
         cancelToken = cancelToken ?? CancellationToken();
@@ -63,9 +64,9 @@ class ExtendedNetworkImageProvider
   @override
   final CancellationToken cancelToken;
 
-//  /// cancel network request by extended image
-//  /// if false, cancel by user
-//  final bool autoCancel;
+  /// Custom cache key
+  @override
+  final String cacheKey;
 
   @override
   ImageStreamCompleter load(
@@ -105,7 +106,7 @@ class ExtendedNetworkImageProvider
       StreamController<ImageChunkEvent> chunkEvents,
       DecoderCallback decode) async {
     assert(key == this);
-    final String md5Key = keyToMd5(key.url);
+    final String md5Key = cacheKey ?? keyToMd5(key.url);
     ui.Codec result;
     if (cache) {
       try {
@@ -211,7 +212,9 @@ class ExtendedNetworkImageProvider
       print('User cancel request $url.');
       return Future<Uint8List>.error(StateError('User cancel request $url.'));
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     } finally {
       await chunkEvents?.close();
     }
@@ -258,7 +261,6 @@ class ExtendedNetworkImageProvider
     if (other is ExtendedNetworkImageProvider &&
         url == other.url &&
         scale == other.scale) {
-      imageData.data ??= other.rawImageData;
       return true;
     }
     return false;
@@ -276,7 +278,7 @@ class ExtendedNetworkImageProvider
   Future<Uint8List> getNetworkImageData({
     StreamController<ImageChunkEvent> chunkEvents,
   }) async {
-    final String uId = keyToMd5(url);
+    final String uId = cacheKey ?? keyToMd5(url);
 
     if (cache) {
       return await _loadCache(

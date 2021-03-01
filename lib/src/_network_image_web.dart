@@ -18,7 +18,7 @@ import 'extended_network_image_provider.dart' as image_provider;
 /// NetworkImage on the web does not support decoding to a specified size.
 class ExtendedNetworkImageProvider
     extends ImageProvider<image_provider.ExtendedNetworkImageProvider>
-    with ExtendedImageProvider
+    with ExtendedImageProvider<image_provider.ExtendedNetworkImageProvider>
     implements image_provider.ExtendedNetworkImageProvider {
   /// Creates an object that fetches the image at the given URL.
   ///
@@ -32,6 +32,7 @@ class ExtendedNetworkImageProvider
     this.timeLimit,
     this.timeRetry,
     this.cancelToken,
+    this.cacheKey,
   })  : assert(url != null),
         assert(scale != null);
 
@@ -131,6 +132,9 @@ class ExtendedNetworkImageProvider
 
   @override
   final Duration timeRetry;
+
+  @override
+  final String cacheKey;
 
   //not support for web
   @override

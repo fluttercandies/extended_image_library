@@ -1,13 +1,15 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
-import 'package:flutter/widgets.dart';
-
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' hide FileImage;
 import 'extended_image_provider.dart';
+import 'platform.dart';
 
-class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
-  ExtendedFileImageProvider(File file, {double scale = 1.0})
-      : super(file, scale: scale);
+class ExtendedFileImageProvider extends FileImage
+    with ExtendedImageProvider<FileImage> {
+  const ExtendedFileImageProvider(File file, {double scale = 1.0})
+      : assert(!kIsWeb, 'not support on web'),
+        super(file, scale: scale);
   @override
   ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
@@ -25,7 +27,9 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     final Uint8List bytes = await file.readAsBytes();
 
     if (bytes.lengthInBytes == 0) {
-      return null;
+      // The file may become available later.
+      PaintingBinding.instance?.imageCache?.evict(key);
+      throw StateError('$file is empty and cannot be loaded as an image.');
     }
 
     return await instantiateImageCodec(bytes, decode);
@@ -39,7 +43,6 @@ class ExtendedFileImageProvider extends FileImage with ExtendedImageProvider {
     if (other is ExtendedFileImageProvider &&
         file?.path == other.file?.path &&
         scale == other.scale) {
-      imageData.data ??= other.rawImageData;
       return true;
     }
     return false;

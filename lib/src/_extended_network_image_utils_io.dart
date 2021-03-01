@@ -125,3 +125,9 @@ Future<int> getCachedSizeBytes() async {
   }
   return size;
 }
+
+/// Get the local file path of the cached image
+Future<String> getCachedImageFilePath(String url) async {
+  final File file = await getCachedImageFile(url);
+  return file?.path;
+}

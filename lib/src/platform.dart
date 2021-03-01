@@ -1,0 +1,38 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
+import 'package:flutter/widgets.dart';
+
+import 'extended_network_image_provider.dart';
+
+export '_extended_network_image_utils_io.dart'
+    if (dart.library.html) '_extended_network_image_utils_web.dart';
+export '_platform_io.dart' if (dart.library.html) '_platform_web.dart';
+
+const String cacheImageFolderName = 'cacheimage';
+
+///clear all of image in memory
+void clearMemoryImageCache() {
+  PaintingBinding.instance?.imageCache?.clear();
+}
+
+/// get ImageCache
+ImageCache getMemoryImageCache() {
+  return PaintingBinding.instance?.imageCache;
+}
+
+/// get network image data from cached
+Future<Uint8List> getNetworkImageData(
+  String url, {
+  bool useCache = true,
+  StreamController<ImageChunkEvent> chunkEvents,
+}) async {
+  return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
+    chunkEvents: chunkEvents,
+  );
+}
+
+/// get md5 from key
+String keyToMd5(String key) => md5.convert(utf8.encode(key)).toString();

@@ -1,3 +1,8 @@
+## 1.0.0
+
+* fix web capability at pub.dev
+* add cache key #288
+
 ## 0.3.1
 
 * support chunkEvents for network web
