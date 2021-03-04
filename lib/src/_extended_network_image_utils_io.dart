@@ -1,17 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'platform.dart';
 
-import 'extended_network_image_provider.dart';
-
-const String cacheImageFolderName = 'cacheimage';
-
-String keyToMd5(String key) => md5.convert(utf8.encode(key)).toString();
 
 /// Clear the disk cache directory then return if it succeed.
 Future<bool> clearDiskCachedImages({Duration duration}) async {
@@ -87,29 +79,6 @@ Future<bool> cachedImageExists(String url, {String cacheKey}) async {
   } catch (e) {
     return false;
   }
-}
-
-/// Clear all of image in memory
-void clearMemoryImageCache() {
-  PaintingBinding.instance.imageCache.clear();
-}
-
-/// get ImageCache
-ImageCache getMemoryImageCache() {
-  return PaintingBinding.instance.imageCache;
-}
-
-/// Get network image data from cached
-Future<Uint8List> getNetworkImageData(
-  String url, {
-  bool useCache = true,
-  StreamController<ImageChunkEvent> chunkEvents,
-  String cacheKey,
-}) async {
-  return ExtendedNetworkImageProvider(url, cache: useCache, cacheKey: cacheKey)
-      .getNetworkImageData(
-    chunkEvents: chunkEvents,
-  );
 }
 
 /// Get total size of cached image
