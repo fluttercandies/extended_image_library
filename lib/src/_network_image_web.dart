@@ -33,6 +33,7 @@ class ExtendedNetworkImageProvider
     this.timeRetry = const Duration(milliseconds: 100),
     this.cancelToken,
     this.cacheKey,
+    this.printError = true,
   });
 
   @override
@@ -129,6 +130,10 @@ class ExtendedNetworkImageProvider
 
   @override
   final String? cacheKey;
+
+  /// print error
+  @override
+  final bool printError;
 
   // not support on web
   @override

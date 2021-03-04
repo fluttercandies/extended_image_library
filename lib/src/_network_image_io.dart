@@ -28,6 +28,7 @@ class ExtendedNetworkImageProvider
     this.timeRetry = const Duration(milliseconds: 100),
     CancellationToken? cancelToken,
     this.cacheKey,
+    this.printError = true,
   }) : cancelToken = cancelToken ?? CancellationToken();
 
   /// The time limit to request image
@@ -65,6 +66,10 @@ class ExtendedNetworkImageProvider
   /// Custom cache key
   @override
   final String? cacheKey;
+
+  /// print error
+  @override
+  final bool printError;
 
   @override
   ImageStreamCompleter load(
@@ -117,7 +122,9 @@ class ExtendedNetworkImageProvider
           result = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
-        print(e);
+        if (printError) {
+          print(e);
+        }
       }
     }
 
@@ -131,7 +138,9 @@ class ExtendedNetworkImageProvider
           result = await instantiateImageCodec(data, decode);
         }
       } catch (e) {
-        print(e);
+        if (printError) {
+          print(e);
+        }
       }
     }
 
@@ -208,10 +217,12 @@ class ExtendedNetworkImageProvider
 
       return bytes;
     } on OperationCanceledError catch (_) {
-      print('User cancel request $url.');
+      if (printError) {
+        print('User cancel request $url.');
+      }
       return Future<Uint8List>.error(StateError('User cancel request $url.'));
     } catch (e) {
-      if (kDebugMode) {
+      if (printError) {
         print(e);
       }
     } finally {
