@@ -1,3 +1,7 @@
+## 2.0.1-non-null-safety
+
+* add [ExtendedNetworkImageProvider.printError]
+  
 ## 2.0.0-non-null-safety
 
 * non-null-safety

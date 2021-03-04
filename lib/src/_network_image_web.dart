@@ -33,6 +33,7 @@ class ExtendedNetworkImageProvider
     this.timeRetry,
     this.cancelToken,
     this.cacheKey,
+    this.printError = true,
   })  : assert(url != null),
         assert(scale != null);
 
@@ -130,6 +131,10 @@ class ExtendedNetworkImageProvider
 
   @override
   final String cacheKey;
+
+  /// print error
+  @override
+  final bool printError;
 
   // not support on web
   @override

@@ -20,6 +20,7 @@ abstract class ExtendedNetworkImageProvider
     Duration timeRetry,
     CancellationToken cancelToken,
     String cacheKey,
+    bool printError,
   }) = network_image.ExtendedNetworkImageProvider;
 
   /// Time Limit to request image
@@ -48,6 +49,9 @@ abstract class ExtendedNetworkImageProvider
 
   /// Custom cache key
   String get cacheKey;
+
+  /// print error
+  bool get printError;
 
   @override
   ImageStreamCompleter load(
