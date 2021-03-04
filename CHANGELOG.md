@@ -1,11 +1,18 @@
-## 0.4.0-nullsafety.2
+## 2.0.0
 
-* Migrate to non-nullable by default.
+* support-null-safety
+## 1.0.1
+
+* add cache key for utils
+
+## 1.0.0
+
+* fix web capability at pub.dev
+* add cache key #288
 
 ## 0.3.1
 
 * support chunkEvents for network web
-
 ## 0.3.0
 
 * export http_client_helper
@@ -13,7 +20,7 @@
 ## 0.2.3
 
 * fix analysis_options.yaml base on flutter sdk
-  
+
 ## 0.2.2
 
 * add analysis_options.yaml
@@ -24,7 +31,7 @@
 * support loading progress for network
 * public HttpClient of ExtendedNetworkImageProvider
 * add getCachedSizeBytes method
-  
+
 ## 0.2.0
 
 * web support
@@ -40,7 +47,7 @@
 ## 0.1.7
 
 * override == method to set rawImageData
-  
+
 ## 0.1.6
 
 * add ExtendedImageProvider
@@ -48,8 +55,8 @@
       ExtendedAssetImageProvider
       ExtendedFileImageProvider
       ExtendedMemoryImageProvider
-  now we can get raw image data from ExtendedImageProvider     
-  
+  now we can get raw image data from ExtendedImageProvider
+
 ## 0.1.5
 
 * add getCachedImageFile(url) method

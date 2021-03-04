@@ -1,20 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'platform.dart';
 
-import 'extended_network_image_provider.dart';
-
-const String cacheImageFolderName = 'cacheimage';
-
-String keyToMd5(String key) => md5.convert(utf8.encode(key)).toString();
-
-/// clear the disk cache directory then return if it succeed.
-///  <param name="duration">timespan to compute whether file has expired or not</param>
+/// Clear the disk cache directory then return if it succeed.
 Future<bool> clearDiskCachedImages({Duration? duration}) async {
   try {
     final Directory cacheImagesDirectory = Directory(
@@ -27,7 +17,6 @@ Future<bool> clearDiskCachedImages({Duration? duration}) async {
         for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
           final FileStat fs = file.statSync();
           if (now.subtract(duration).isAfter(fs.changed)) {
-            //print("remove expired cached image");
             file.deleteSync(recursive: true);
           }
         }
@@ -39,11 +28,10 @@ Future<bool> clearDiskCachedImages({Duration? duration}) async {
   return true;
 }
 
-/// clear the disk cache image then return if it succeed.
-///  <param name="url">clear specific one</param>
-Future<bool> clearDiskCachedImage(String url) async {
+/// Clear the disk cache image then return if it succeed.
+Future<bool> clearDiskCachedImage(String url, {String? cacheKey}) async {
   try {
-    final File? file = await getCachedImageFile(url);
+    final File? file = await getCachedImageFile(url, cacheKey: cacheKey);
     if (file != null) {
       await file.delete(recursive: true);
     }
@@ -53,14 +41,13 @@ Future<bool> clearDiskCachedImage(String url) async {
   return true;
 }
 
-///get the local file of the cached image
+/// Get the local file of the cached image
 
-Future<File?> getCachedImageFile(String url) async {
+Future<File?> getCachedImageFile(String url, {String? cacheKey}) async {
   try {
-    final String key = keyToMd5(url);
+    final String key = cacheKey ?? keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
-      join((await getTemporaryDirectory()).path, cacheImageFolderName),
-    );
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
     if (cacheImagesDirectory.existsSync()) {
       for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
         if (file.path.endsWith(key)) {
@@ -74,13 +61,12 @@ Future<File?> getCachedImageFile(String url) async {
   return null;
 }
 
-///check if the image exists in cache
-Future<bool> cachedImageExists(String url) async {
+/// Check if the image exists in cache
+Future<bool> cachedImageExists(String url, {String? cacheKey}) async {
   try {
-    final String key = keyToMd5(url);
+    final String key = cacheKey ?? keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
-      join((await getTemporaryDirectory()).path, cacheImageFolderName),
-    );
+        join((await getTemporaryDirectory()).path, cacheImageFolderName));
     if (cacheImagesDirectory.existsSync()) {
       for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
         if (file.path.endsWith(key)) {
@@ -94,37 +80,21 @@ Future<bool> cachedImageExists(String url) async {
   }
 }
 
-///clear all of image in memory
-void clearMemoryImageCache() {
-  PaintingBinding.instance?.imageCache?.clear();
-}
-
-/// get ImageCache
-ImageCache? getMemoryImageCache() {
-  return PaintingBinding.instance?.imageCache;
-}
-
-/// get network image data from cached
-Future<Uint8List?> getNetworkImageData(
-  String url, {
-  bool useCache = true,
-  StreamController<ImageChunkEvent>? chunkEvents,
-}) async {
-  return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
-    chunkEvents: chunkEvents,
-  );
-}
-
-/// get total size of cached image
+/// Get total size of cached image
 Future<int> getCachedSizeBytes() async {
   int size = 0;
   final Directory cacheImagesDirectory = Directory(
-    join((await getTemporaryDirectory()).path, cacheImageFolderName),
-  );
+      join((await getTemporaryDirectory()).path, cacheImageFolderName));
   if (cacheImagesDirectory.existsSync()) {
     for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
       size += file.statSync().size;
     }
   }
   return size;
+}
+
+/// Get the local file path of the cached image
+Future<String?> getCachedImageFilePath(String url, {String? cacheKey}) async {
+  final File? file = await getCachedImageFile(url, cacheKey: cacheKey);
+  return file?.path;
 }

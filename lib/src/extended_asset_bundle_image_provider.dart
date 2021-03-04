@@ -7,29 +7,22 @@ import 'package:flutter/widgets.dart';
 
 import 'extended_image_provider.dart';
 
-// ignore: must_be_immutable
 class ExtendedExactAssetImageProvider extends ExactAssetImage
-    with ExtendedImageProvider {
-  ExtendedExactAssetImageProvider(
+    with ExtendedImageProvider<AssetBundleImageKey> {
+  const ExtendedExactAssetImageProvider(
     String assetName, {
     AssetBundle? bundle,
     String? package,
     double scale = 1.0,
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
 
-  late ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
-
   @override
   Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
-    final Completer<ExtendedAssetBundleImageKey> completer =
-        Completer<ExtendedAssetBundleImageKey>();
+    final Completer<AssetBundleImageKey> completer =
+        Completer<AssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
-        bundle: value.bundle,
-        scale: value.scale,
-        name: value.name,
-      );
-      completer.complete(_extendedAssetBundleImageKey);
+      completer.complete(AssetBundleImageKey(
+          bundle: value.bundle, scale: value.scale, name: value.name));
     });
     return completer.future;
   }
@@ -52,43 +45,35 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-    AssetBundleImageKey key,
-    DecoderCallback decode,
-  ) async {
-    final ByteData data = await key.bundle.load(key.name);
-    if (data == null) {
-      throw 'Unable to read data';
+      AssetBundleImageKey key, DecoderCallback decode) async {
+    ByteData data;
+    // Hot reload/restart could change whether an asset bundle or key in a
+    // bundle are available, or if it is a network backed bundle.
+    try {
+      data = await key.bundle.load(key.name);
+    } on FlutterError {
+      PaintingBinding.instance?.imageCache?.evict(key);
+      rethrow;
     }
     final Uint8List result = data.buffer.asUint8List();
-    _extendedAssetBundleImageKey.data.value = result;
     return await instantiateImageCodec(result, decode);
   }
-
-  @override
-  Uint8List? get rawImageData =>
-      super.rawImageData ?? _extendedAssetBundleImageKey.data.value;
 }
 
-class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
-  ExtendedAssetImageProvider(
+class ExtendedAssetImageProvider extends AssetImage
+    with ExtendedImageProvider<AssetBundleImageKey> {
+  const ExtendedAssetImageProvider(
     String assetName, {
     AssetBundle? bundle,
     String? package,
   }) : super(assetName, bundle: bundle, package: package);
-
-  late final ExtendedAssetBundleImageKey _extendedAssetBundleImageKey;
-
   @override
   Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
-    final Completer<ExtendedAssetBundleImageKey> completer =
-        Completer<ExtendedAssetBundleImageKey>();
+    final Completer<AssetBundleImageKey> completer =
+        Completer<AssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      _extendedAssetBundleImageKey = ExtendedAssetBundleImageKey(
-        bundle: value.bundle,
-        scale: value.scale,
-        name: value.name,
-      );
-      completer.complete(_extendedAssetBundleImageKey);
+      completer.complete(AssetBundleImageKey(
+          bundle: value.bundle, scale: value.scale, name: value.name));
     });
     return completer.future;
   }
@@ -111,34 +96,27 @@ class ExtendedAssetImageProvider extends AssetImage with ExtendedImageProvider {
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderCallback decode,) async {
-    final ByteData data = await key.bundle.load(key.name);
-    if (data == null) {
-      throw 'Unable to read data';
+      AssetBundleImageKey key, DecoderCallback decode) async {
+    ByteData data;
+    // Hot reload/restart could change whether an asset bundle or key in a
+    // bundle are available, or if it is a network backed bundle.
+    try {
+      data = await key.bundle.load(key.name);
+    } on FlutterError {
+      PaintingBinding.instance?.imageCache?.evict(key);
+      rethrow;
     }
     final Uint8List result = data.buffer.asUint8List();
-    _extendedAssetBundleImageKey.data.value = result;
     return await instantiateImageCodec(result, decode);
   }
-
-  @override
-  Uint8List? get rawImageData =>
-      super.rawImageData ?? _extendedAssetBundleImageKey.data.value;
 }
 
 class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
-  ExtendedAssetBundleImageKey({
+  const ExtendedAssetBundleImageKey({
     required AssetBundle bundle,
     required String name,
     required double scale,
-  })   : data = _Data(),
-        assert(bundle != null),
-        assert(name != null),
-        assert(scale != null),
-        super(bundle: bundle, name: name, scale: scale);
-
-  final _Data data;
-
+  }) : super(bundle: bundle, name: name, scale: scale);
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) {
@@ -148,7 +126,6 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
         bundle == other.bundle &&
         name == other.name &&
         scale == other.scale) {
-      data.value ??= other.data.value;
       return true;
     }
 
@@ -157,10 +134,4 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
 
   @override
   int get hashCode => hashValues(bundle, name, scale);
-}
-
-class _Data {
-  _Data();
-
-  Uint8List? value;
 }

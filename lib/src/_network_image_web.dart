@@ -9,8 +9,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-
 import 'extended_image_provider.dart';
+
 import 'extended_network_image_provider.dart' as image_provider;
 
 /// The dart:html implementation of [image_provider.NetworkImage].
@@ -18,7 +18,7 @@ import 'extended_network_image_provider.dart' as image_provider;
 /// NetworkImage on the web does not support decoding to a specified size.
 class ExtendedNetworkImageProvider
     extends ImageProvider<image_provider.ExtendedNetworkImageProvider>
-    with ExtendedImageProvider
+    with ExtendedImageProvider<image_provider.ExtendedNetworkImageProvider>
     implements image_provider.ExtendedNetworkImageProvider {
   /// Creates an object that fetches the image at the given URL.
   ///
@@ -30,10 +30,10 @@ class ExtendedNetworkImageProvider
     this.cache = false,
     this.retries = 3,
     this.timeLimit,
-    this.timeRetry,
+    this.timeRetry = const Duration(milliseconds: 100),
     this.cancelToken,
-  })  : assert(url != null),
-        assert(scale != null);
+    this.cacheKey,
+  });
 
   @override
   final String url;
@@ -45,32 +45,14 @@ class ExtendedNetworkImageProvider
   final Map<String, String>? headers;
 
   @override
-  final bool cache;
-
-  @override
-  final CancellationToken? cancelToken;
-
-  @override
-  final int retries;
-
-  @override
-  final Duration? timeLimit;
-
-  @override
-  final Duration? timeRetry;
-
-  @override
   Future<ExtendedNetworkImageProvider> obtainKey(
-    ImageConfiguration configuration,
-  ) {
+      ImageConfiguration configuration) {
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
   @override
   ImageStreamCompleter load(
-    image_provider.ExtendedNetworkImageProvider key,
-    DecoderCallback decode,
-  ) {
+      image_provider.ExtendedNetworkImageProvider key, DecoderCallback decode) {
     // Ownership of this controller is handed off to [_loadAsync]; it is that
     // method's responsibility to close the controller's stream when the image
     // has been loaded or an error is thrown.
@@ -80,18 +62,12 @@ class ExtendedNetworkImageProvider
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode, chunkEvents),
       scale: key.scale,
-//        informationCollector: (StringBuffer information) {
-//          information.writeln('Image provider: $this');
-//          information.write('Image key: $key');
-//        }
       chunkEvents: chunkEvents.stream,
       informationCollector: () {
         return <DiagnosticsNode>[
           DiagnosticsProperty<ImageProvider>('Image provider', this),
           DiagnosticsProperty<image_provider.ExtendedNetworkImageProvider>(
-            'Image key',
-            key,
-          ),
+              'Image key', key),
         ];
       },
     );
@@ -104,27 +80,20 @@ class ExtendedNetworkImageProvider
   // here is ignored and the web-only `ui.webOnlyInstantiateImageCodecFromUrl` will be used
   // directly in place of the typical `instantiateImageCodec` method.
   Future<ui.Codec> _loadAsync(
-    image_provider.ExtendedNetworkImageProvider key,
-    DecoderCallback decode,
-    StreamController<ImageChunkEvent> chunkEvents,
-  ) async {
+      image_provider.ExtendedNetworkImageProvider key,
+      DecoderCallback decode,
+      StreamController<ImageChunkEvent> chunkEvents) async {
     assert(key == this);
 
     final Uri resolved = Uri.base.resolve(key.url);
     // This API only exists in the web engine implementation and is not
     // contained in the analyzer summary for Flutter.
     // ignore: return_of_invalid_type,undefined_function
-    return ui.webOnlyInstantiateImageCodecFromUrl(
-      resolved, // ignore: undefined_function
-      chunkCallback: (int bytes, int total) {
-        chunkEvents.add(
-          ImageChunkEvent(
-            cumulativeBytesLoaded: bytes,
-            expectedTotalBytes: total,
-          ),
-        );
-      },
-    ) as Future<ui.Codec>; // ignore: undefined_function
+    return ui.webOnlyInstantiateImageCodecFromUrl(resolved,
+        chunkCallback: (int bytes, int total) {
+      chunkEvents.add(ImageChunkEvent(
+          cumulativeBytesLoaded: bytes, expectedTotalBytes: total));
+    }) as Future<ui.Codec>;
   }
 
   @override
@@ -143,12 +112,31 @@ class ExtendedNetworkImageProvider
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';
 
-  //not support for web
+  @override
+  final bool cache;
+
+  @override
+  final CancellationToken? cancelToken;
+
+  @override
+  final int retries;
+
+  @override
+  final Duration? timeLimit;
+
+  @override
+  final Duration timeRetry;
+
+  @override
+  final String? cacheKey;
+
+  // not support on web
   @override
   Future<Uint8List?> getNetworkImageData({
     StreamController<ImageChunkEvent>? chunkEvents,
-  }) async =>
-      null;
+  }) {
+    return Future<Uint8List>.error('not support on web');
+  }
 
   static dynamic get httpClient => null;
 }
