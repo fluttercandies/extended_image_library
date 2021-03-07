@@ -193,9 +193,8 @@ class ExtendedNetworkImageProvider
   ) async {
     try {
       final Uri resolved = Uri.base.resolve(key.url);
-      final HttpClientResponse response =
-          await (_tryGetResponse(resolved) as FutureOr<HttpClientResponse>);
-      if (response.statusCode != HttpStatus.ok) {
+      final HttpClientResponse? response = await _tryGetResponse(resolved);
+      if (response == null || response.statusCode != HttpStatus.ok) {
         return null;
       }
 

@@ -1,3 +1,6 @@
+## 2.0.2
+
+* fix null-safety cast error
 ## 2.0.1
 
 * add [ExtendedNetworkImageProvider.printError]
