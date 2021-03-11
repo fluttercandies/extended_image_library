@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -153,12 +154,9 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       targetWidth = descriptor.width ~/ scale;
       targetHeight = descriptor.height ~/ scale;
     } else if (maxBytes != null) {
-      targetWidth = descriptor.width;
-      targetHeight = descriptor.height;
-      while (targetWidth! * targetHeight! * 4 > maxBytes) {
-        targetWidth >>= 1;
-        targetHeight >>= 1;
-      }
+      IntSize size = resizeWH(descriptor.width, descriptor.height, maxBytes);
+      targetWidth = size.width;
+      targetHeight = size.height;
     } else if (!allowUpscaling) {
       if (targetWidth != null && targetWidth > descriptor.width) {
         targetWidth = descriptor.width;
@@ -176,6 +174,43 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       targetHeight: targetHeight,
     );
   }
+
+  ///Calculate fittest size.
+  IntSize resizeWH(int width, int height, int maxSize) {
+    int w_h = width * height;
+    int outW = width;
+    int outH = height;
+    int maxSize_1_4 = maxSize >> 2;
+    if (w_h > maxSize_1_4) {
+      int gcd = _gcd(width, height);
+      if (gcd != 1) {
+        int gcdW = width ~/ gcd;
+        int gcdH = height ~/ gcd;
+        int scale = sqrt(maxSize_1_4 / (gcdW * gcdH)).toInt();
+        outW = gcdW * scale;
+        outH = gcdH * scale;
+      }
+    }
+    return IntSize(outW, outH);
+  }
+
+  int _gcd(int a, int b) {
+    int r = 1;
+    do {
+      r = a % b;
+      a = b;
+      b = r;
+    } while (b != 0);
+    return a;
+  }
+}
+
+@immutable
+class IntSize {
+  const IntSize(this.width, this.height);
+
+  final int width;
+  final int height;
 }
 
 @immutable
