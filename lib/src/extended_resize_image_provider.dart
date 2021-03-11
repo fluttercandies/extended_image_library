@@ -177,32 +177,13 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   ///Calculate fittest size.
   IntSize resizeWH(int width, int height, int maxSize) {
-    int w_h = width * height;
-    int outW = width;
-    int outH = height;
+    double ratio = width / height;
     int maxSize_1_4 = maxSize >> 2;
-    if (w_h > maxSize_1_4) {
-      int gcd = _gcd(width, height);
-      if (gcd != 1) {
-        int gcdW = width ~/ gcd;
-        int gcdH = height ~/ gcd;
-        int scale = sqrt(maxSize_1_4 / (gcdW * gcdH)).toInt();
-        outW = gcdW * scale;
-        outH = gcdH * scale;
-      }
-    }
-    return IntSize(outW, outH);
+    int targetHeight = sqrt(maxSize_1_4 / ratio).floor();
+    int targetWidth = (ratio * targetHeight).floor();
+    return IntSize(targetWidth, targetHeight);
   }
 
-  int _gcd(int a, int b) {
-    int r = 1;
-    do {
-      r = a % b;
-      a = b;
-      b = r;
-    } while (b != 0);
-    return a;
-  }
 }
 
 @immutable
