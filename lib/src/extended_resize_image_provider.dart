@@ -17,7 +17,7 @@ import 'extended_image_provider.dart';
 /// The decoded image may still be displayed at sizes other than the
 /// cached size provided here.
 ///
-/// [scailingRatio] If not null, the original image's width and height will
+/// [scaling] If not null, the original image's width and height will
 /// divide with it to calculate targetWidth.
 /// [maxBytes] If not null, the image will resize to a size that nolarger
 /// than [maxBytes]. Default size is 500KB.
@@ -25,12 +25,12 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     with ExtendedImageProvider<_SizeAwareCacheKey> {
   const ExtendedResizeImage(
     this.imageProvider, {
-    this.scailingRatio,
+    this.scaling,
     this.maxBytes = 500 << 10,
     this.width,
     this.height,
     this.allowUpscaling = false,
-  })  : assert(scailingRatio != null ||
+  })  : assert(scaling != null ||
             maxBytes != null ||
             width != null ||
             height != null),
@@ -42,8 +42,8 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// The maxBytes the image should decode to and cache.
   final int? maxBytes;
 
-  /// The scailingRatio the image should decode to and cache.
-  final double? scailingRatio;
+  /// The scaling the image should decode to and cache.
+  final double? scaling;
 
   /// The width the image should decode to and cache.
   final int? width;
@@ -66,24 +66,24 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// When `cacheWidth` and `cacheHeight` are both null, this will return the
   /// `provider` directly.
   ///
-  /// Extended with `scailingRatio` and `maxBytes`.
+  /// Extended with `scaling` and `maxBytes`.
   static ImageProvider<Object> resizeIfNeeded(
     int? cacheWidth,
     int? cacheHeight,
     ImageProvider<Object> provider, {
-    double? scailingRatio,
+    double? scaling,
     int? maxBytes,
   }) {
     if (cacheWidth != null ||
         cacheHeight != null ||
-        scailingRatio != null ||
+        scaling != null ||
         maxBytes != null) {
       return ExtendedResizeImage(
         provider,
         width: cacheWidth,
         height: cacheHeight,
         maxBytes: maxBytes,
-        scailingRatio: scailingRatio,
+        scaling: scaling,
       );
     }
     return provider;
@@ -99,7 +99,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
           'cacheWidth, cacheHeight, or allowUpscaling.');
       return _instantiateImageCodec(
         bytes,
-        scale: scailingRatio,
+        scale: scaling,
         maxBytes: maxBytes,
         targetWidth: width,
         targetHeight: height,
@@ -109,7 +109,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         imageProvider.load(key.providerCacheKey, decodeResize);
     if (!kReleaseMode) {
       completer.debugLabel =
-          '${completer.debugLabel} - Resized(scale: ${key.scailingRatio} maxBytes${key.maxBytes})';
+          '${completer.debugLabel} - Resized(scale: ${key.scaling} maxBytes${key.maxBytes})';
     }
     return completer;
   }
@@ -125,11 +125,11 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         // This future has completed synchronously (completer was never assigned),
         // so we can directly create the synchronous result to return.
         result = SynchronousFuture<_SizeAwareCacheKey>(
-            _SizeAwareCacheKey(key, scailingRatio, maxBytes, width, height));
+            _SizeAwareCacheKey(key, scaling, maxBytes, width, height));
       } else {
         // This future did not synchronously complete.
         completer.complete(
-            _SizeAwareCacheKey(key, scailingRatio, maxBytes, width, height));
+            _SizeAwareCacheKey(key, scaling, maxBytes, width, height));
       }
     });
     if (result != null) {
@@ -198,7 +198,7 @@ class IntSize {
 class _SizeAwareCacheKey {
   const _SizeAwareCacheKey(
     this.providerCacheKey,
-    this.scailingRatio,
+    this.scaling,
     this.maxBytes,
     this.width,
     this.height,
@@ -208,7 +208,7 @@ class _SizeAwareCacheKey {
 
   final int? maxBytes;
 
-  final double? scailingRatio;
+  final double? scaling;
 
   final int? width;
 
@@ -220,12 +220,12 @@ class _SizeAwareCacheKey {
     return other is _SizeAwareCacheKey &&
         other.providerCacheKey == providerCacheKey &&
         other.maxBytes == maxBytes &&
-        other.scailingRatio == scailingRatio &&
+        other.scaling == scaling &&
         other.width == width &&
         other.height == height;
   }
 
   @override
   int get hashCode =>
-      hashValues(providerCacheKey, maxBytes, scailingRatio, width, height);
+      hashValues(providerCacheKey, maxBytes, scaling, width, height);
 }
