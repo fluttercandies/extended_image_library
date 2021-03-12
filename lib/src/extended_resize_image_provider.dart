@@ -16,21 +16,16 @@ import 'extended_image_provider.dart';
 ///
 /// The decoded image may still be displayed at sizes other than the
 /// cached size provided here.
-///
-/// [scaling] If not null, the original image's width and height will
-/// divide with it to calculate targetWidth.
-/// [maxBytes] If not null, the image will resize to a size that nolarger
-/// than [maxBytes]. Default size is 500KB.
 class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     with ExtendedImageProvider<_SizeAwareCacheKey> {
   const ExtendedResizeImage(
     this.imageProvider, {
-    this.scaling,
+    this.compressionRatio,
     this.maxBytes = 500 << 10,
     this.width,
     this.height,
     this.allowUpscaling = false,
-  })  : assert(scaling != null ||
+  })  : assert(compressionRatio != null ||
             maxBytes != null ||
             width != null ||
             height != null),
@@ -39,11 +34,15 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// The [ImageProvider] that this class wraps.
   final ImageProvider imageProvider;
 
-  /// The maxBytes the image should decode to and cache.
+  /// [ExtendedResizeImage] will compress the image to a size
+  /// that is smaller than [maxBytes]. The default size is 500KB.
   final int? maxBytes;
 
-  /// The scaling the image should decode to and cache.
-  final double? scaling;
+  /// The image`s size will resize to original * [compressionRatio].
+  /// It's ExtendedResizeImage`s first pick.
+  /// The compressionRatio`s range is from 0.0, exclusive, to
+  /// 1.0, inclusive.
+  final double? compressionRatio;
 
   /// The width the image should decode to and cache.
   final int? width;
@@ -71,19 +70,19 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     int? cacheWidth,
     int? cacheHeight,
     ImageProvider<Object> provider, {
-    double? scaling,
+    double? compressionRatio,
     int? maxBytes,
   }) {
     if (cacheWidth != null ||
         cacheHeight != null ||
-        scaling != null ||
+        compressionRatio != null ||
         maxBytes != null) {
       return ExtendedResizeImage(
         provider,
         width: cacheWidth,
         height: cacheHeight,
         maxBytes: maxBytes,
-        scaling: scaling,
+        compressionRatio: compressionRatio,
       );
     }
     return provider;
@@ -91,25 +90,33 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   @override
   ImageStreamCompleter load(_SizeAwareCacheKey key, DecoderCallback decode) {
-    final DecoderCallback decodeResize = (Uint8List bytes,
-        {int? cacheWidth, int? cacheHeight, bool? allowUpscaling}) {
+    final DecoderCallback decodeResize = (
+      Uint8List bytes, {
+      int? cacheWidth,
+      int? cacheHeight,
+      bool? allowUpscaling,
+    }) {
       assert(
-          cacheWidth == null && cacheHeight == null && allowUpscaling == null,
-          'ResizeImage cannot be composed with another ImageProvider that applies '
-          'cacheWidth, cacheHeight, or allowUpscaling.');
+        cacheWidth == null && cacheHeight == null && allowUpscaling == null,
+        'ResizeImage cannot be composed with another ImageProvider that applies '
+        'cacheWidth, cacheHeight, or allowUpscaling.',
+      );
       return _instantiateImageCodec(
         bytes,
-        scale: scaling,
+        compressionRatio: compressionRatio,
         maxBytes: maxBytes,
         targetWidth: width,
         targetHeight: height,
       );
     };
-    final ImageStreamCompleter completer =
-        imageProvider.load(key.providerCacheKey, decodeResize);
+    final ImageStreamCompleter completer = imageProvider.load(
+      key.providerCacheKey,
+      decodeResize,
+    );
     if (!kReleaseMode) {
       completer.debugLabel =
-          '${completer.debugLabel} - Resized(scale: ${key.scaling} maxBytes${key.maxBytes})';
+          '${completer.debugLabel} - Resized(compressionRatio:'
+          ' ${key.compressionRatio} maxBytes${key.maxBytes})';
     }
     return completer;
   }
@@ -125,11 +132,11 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         // This future has completed synchronously (completer was never assigned),
         // so we can directly create the synchronous result to return.
         result = SynchronousFuture<_SizeAwareCacheKey>(
-            _SizeAwareCacheKey(key, scaling, maxBytes, width, height));
+            _SizeAwareCacheKey(key, compressionRatio, maxBytes, width, height));
       } else {
         // This future did not synchronously complete.
         completer.complete(
-            _SizeAwareCacheKey(key, scaling, maxBytes, width, height));
+            _SizeAwareCacheKey(key, compressionRatio, maxBytes, width, height));
       }
     });
     if (result != null) {
@@ -143,16 +150,27 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   Future<Codec> _instantiateImageCodec(
     Uint8List list, {
-    double? scale,
+    double? compressionRatio,
     int? maxBytes,
     int? targetWidth,
     int? targetHeight,
   }) async {
     final ImmutableBuffer buffer = await ImmutableBuffer.fromUint8List(list);
     final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
-    if (scale != null) {
-      targetWidth = descriptor.width ~/ scale;
-      targetHeight = descriptor.height ~/ scale;
+    if (compressionRatio != null) {
+      assert(compressionRatio > 0 && compressionRatio <= 1);
+      if (compressionRatio == 1) {
+        targetWidth = descriptor.width;
+        targetHeight = descriptor.height;
+      } else {
+        IntSize size = resizeWH(
+            descriptor.width,
+            descriptor.height,
+            (descriptor.width * descriptor.height * 4 * compressionRatio)
+                .toInt());
+        targetWidth = size.width;
+        targetHeight = size.height;
+      }
     } else if (maxBytes != null) {
       IntSize size = resizeWH(descriptor.width, descriptor.height, maxBytes);
       targetWidth = size.width;
@@ -165,10 +183,6 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         targetHeight = descriptor.height;
       }
     }
-    if (kDebugMode) {
-      print('origin size: ${descriptor.width}*${descriptor.height} '
-          'scaled size: $targetWidth*$targetHeight');
-    }
     return descriptor.instantiateCodec(
       targetWidth: targetWidth,
       targetHeight: targetHeight,
@@ -176,14 +190,16 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   ///Calculate fittest size.
-  IntSize resizeWH(int width, int height, int maxSize) {
+  ///[width] The image's original width.
+  ///[height] The image's original height.
+  ///[maxBytes] The size that image will resize to.
+  IntSize resizeWH(int width, int height, int maxBytes) {
     double ratio = width / height;
-    int maxSize_1_4 = maxSize >> 2;
+    int maxSize_1_4 = maxBytes >> 2;
     int targetHeight = sqrt(maxSize_1_4 / ratio).floor();
     int targetWidth = (ratio * targetHeight).floor();
     return IntSize(targetWidth, targetHeight);
   }
-
 }
 
 @immutable
@@ -198,7 +214,7 @@ class IntSize {
 class _SizeAwareCacheKey {
   const _SizeAwareCacheKey(
     this.providerCacheKey,
-    this.scaling,
+    this.compressionRatio,
     this.maxBytes,
     this.width,
     this.height,
@@ -208,7 +224,7 @@ class _SizeAwareCacheKey {
 
   final int? maxBytes;
 
-  final double? scaling;
+  final double? compressionRatio;
 
   final int? width;
 
@@ -220,12 +236,12 @@ class _SizeAwareCacheKey {
     return other is _SizeAwareCacheKey &&
         other.providerCacheKey == providerCacheKey &&
         other.maxBytes == maxBytes &&
-        other.scaling == scaling &&
+        other.compressionRatio == compressionRatio &&
         other.width == width &&
         other.height == height;
   }
 
   @override
   int get hashCode =>
-      hashValues(providerCacheKey, maxBytes, scaling, width, height);
+      hashValues(providerCacheKey, maxBytes, compressionRatio, width, height);
 }
