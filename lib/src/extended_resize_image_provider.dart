@@ -5,7 +5,6 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 import 'extended_image_provider.dart';
 
 /// Instructs Flutter to decode the image at the specified dimensions
@@ -25,11 +24,12 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.width,
     this.height,
     this.allowUpscaling = false,
-  })  : assert(compressionRatio != null ||
-            maxBytes != null ||
+  }) : assert((compressionRatio != null &&
+                compressionRatio > 0 &&
+                compressionRatio < 1) ||
+            (maxBytes != null && maxBytes > 0) ||
             width != null ||
-            height != null),
-        assert(allowUpscaling != null);
+            height != null);
 
   /// The [ImageProvider] that this class wraps.
   final ImageProvider imageProvider;
@@ -40,8 +40,8 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   /// The image`s size will resize to original * [compressionRatio].
   /// It's ExtendedResizeImage`s first pick.
-  /// The compressionRatio`s range is from 0.0, exclusive, to
-  /// 1.0, inclusive.
+  /// The compressionRatio`s range is from 0.0 (exclusive), to
+  /// 1.0 (exclusive).
   final double? compressionRatio;
 
   /// The width the image should decode to and cache.
@@ -66,17 +66,19 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// `provider` directly.
   ///
   /// Extended with `scaling` and `maxBytes`.
-  static ImageProvider<Object> resizeIfNeeded(
+  static ImageProvider<Object> resizeIfNeeded({
+    required ImageProvider<Object> provider,
     int? cacheWidth,
     int? cacheHeight,
-    ImageProvider<Object> provider, {
     double? compressionRatio,
     int? maxBytes,
   }) {
-    if (cacheWidth != null ||
-        cacheHeight != null ||
-        compressionRatio != null ||
-        maxBytes != null) {
+    if ((compressionRatio != null &&
+            compressionRatio > 0 &&
+            compressionRatio < 1) ||
+        (maxBytes != null && maxBytes > 0) ||
+        cacheWidth != null ||
+        cacheHeight != null) {
       return ExtendedResizeImage(
         provider,
         width: cacheWidth,
@@ -116,7 +118,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     if (!kReleaseMode) {
       completer.debugLabel =
           '${completer.debugLabel} - Resized(compressionRatio:'
-          ' ${key.compressionRatio} maxBytes${key.maxBytes})';
+          ' ${key.compressionRatio} maxBytes:${key.maxBytes} size:${key.width}*${key.height})';
     }
     return completer;
   }
@@ -158,21 +160,19 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     final ImmutableBuffer buffer = await ImmutableBuffer.fromUint8List(list);
     final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
     if (compressionRatio != null) {
-      assert(compressionRatio > 0 && compressionRatio <= 1);
-      if (compressionRatio == 1) {
-        targetWidth = descriptor.width;
-        targetHeight = descriptor.height;
-      } else {
-        IntSize size = resizeWH(
-            descriptor.width,
-            descriptor.height,
-            (descriptor.width * descriptor.height * 4 * compressionRatio)
-                .toInt());
-        targetWidth = size.width;
-        targetHeight = size.height;
-      }
+      final _IntSize size = _resize(
+        descriptor.width,
+        descriptor.height,
+        (descriptor.width * descriptor.height * 4 * compressionRatio).toInt(),
+      );
+      targetWidth = size.width;
+      targetHeight = size.height;
     } else if (maxBytes != null) {
-      IntSize size = resizeWH(descriptor.width, descriptor.height, maxBytes);
+      final _IntSize size = _resize(
+        descriptor.width,
+        descriptor.height,
+        maxBytes,
+      );
       targetWidth = size.width;
       targetHeight = size.height;
     } else if (!allowUpscaling) {
@@ -189,22 +189,23 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     );
   }
 
-  ///Calculate fittest size.
-  ///[width] The image's original width.
-  ///[height] The image's original height.
-  ///[maxBytes] The size that image will resize to.
-  IntSize resizeWH(int width, int height, int maxBytes) {
-    double ratio = width / height;
-    int maxSize_1_4 = maxBytes >> 2;
-    int targetHeight = sqrt(maxSize_1_4 / ratio).floor();
-    int targetWidth = (ratio * targetHeight).floor();
-    return IntSize(targetWidth, targetHeight);
+  /// Calculate fittest size.
+  /// [width] The image's original width.
+  /// [height] The image's original height.
+  /// [maxBytes] The size that image will resize to.
+  ///
+  _IntSize _resize(int width, int height, int maxBytes) {
+    final double ratio = width / height;
+    final int maxSize_1_4 = maxBytes >> 2;
+    final int targetHeight = sqrt(maxSize_1_4 / ratio).floor();
+    final int targetWidth = (ratio * targetHeight).floor();
+    return _IntSize(targetWidth, targetHeight);
   }
 }
 
 @immutable
-class IntSize {
-  const IntSize(this.width, this.height);
+class _IntSize {
+  const _IntSize(this.width, this.height);
 
   final int width;
   final int height;
@@ -232,7 +233,9 @@ class _SizeAwareCacheKey {
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType) return false;
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
     return other is _SizeAwareCacheKey &&
         other.providerCacheKey == providerCacheKey &&
         other.maxBytes == maxBytes &&
@@ -242,6 +245,11 @@ class _SizeAwareCacheKey {
   }
 
   @override
-  int get hashCode =>
-      hashValues(providerCacheKey, maxBytes, compressionRatio, width, height);
+  int get hashCode => hashValues(
+        providerCacheKey,
+        maxBytes,
+        compressionRatio,
+        width,
+        height,
+      );
 }

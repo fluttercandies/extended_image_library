@@ -1,3 +1,7 @@
+## 2.1.0
+
+* add [ExtendedResizeImage] to support resize image
+  
 ## 2.0.2
 
 * fix null-safety cast error
