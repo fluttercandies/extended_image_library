@@ -34,6 +34,7 @@ class ExtendedNetworkImageProvider
     this.cancelToken,
     this.cacheKey,
     this.printError = true,
+    this.cacheRawData = false,
   });
 
   @override
@@ -104,14 +105,19 @@ class ExtendedNetworkImageProvider
     }
     return other is ExtendedNetworkImageProvider &&
         url == other.url &&
-        scale == other.scale;
+        scale == other.scale &&
+        cacheRawData == other.cacheRawData;
   }
 
   @override
-  int get hashCode => ui.hashValues(url, scale);
+  int get hashCode => ui.hashValues(
+        url,
+        scale,
+        cacheRawData,
+      );
 
   @override
-  String toString() => '$runtimeType("$url", scale: $scale)';
+  String toString() => '$runtimeType("$url", scale: $scale, cacheRawData)';
 
   @override
   final bool cache;
@@ -144,4 +150,7 @@ class ExtendedNetworkImageProvider
   }
 
   static dynamic get httpClient => null;
+
+  @override
+  final bool cacheRawData;
 }

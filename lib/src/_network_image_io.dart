@@ -26,10 +26,18 @@ class ExtendedNetworkImageProvider
     this.retries = 3,
     this.timeLimit,
     this.timeRetry = const Duration(milliseconds: 100),
-    CancellationToken? cancelToken,
     this.cacheKey,
     this.printError = true,
-  }) : cancelToken = cancelToken ?? CancellationToken();
+    this.cacheRawData = false,
+    this.cancelToken,
+  });
+
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  @override
+  final bool cacheRawData;
 
   /// The time limit to request image
   @override
@@ -61,7 +69,7 @@ class ExtendedNetworkImageProvider
 
   /// The token to cancel network request
   @override
-  final CancellationToken cancelToken;
+  final CancellationToken? cancelToken;
 
   /// Custom cache key
   @override
@@ -248,7 +256,7 @@ class ExtendedNetworkImageProvider
   Future<HttpClientResponse?> _tryGetResponse(
     Uri resolved,
   ) async {
-    cancelToken.throwIfCancellationRequested();
+    cancelToken?.throwIfCancellationRequested();
     return await RetryHelper.tryRun<HttpClientResponse>(
       () {
         return CancellationTokenSource.register(
@@ -267,16 +275,32 @@ class ExtendedNetworkImageProvider
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    if (other is ExtendedNetworkImageProvider &&
+    return other is ExtendedNetworkImageProvider &&
         url == other.url &&
-        scale == other.scale) {
-      return true;
-    }
-    return false;
+        scale == other.scale &&
+        cacheRawData == other.cacheRawData &&
+        timeLimit == other.timeLimit &&
+        cancelToken == other.cancelToken &&
+        timeRetry == other.timeRetry &&
+        cache == other.cache &&
+        cacheKey == other.cacheKey &&
+        headers == other.headers &&
+        retries == other.retries;
   }
 
   @override
-  int get hashCode => hashValues(url, scale);
+  int get hashCode => hashValues(
+        url,
+        scale,
+        cacheRawData,
+        timeLimit,
+        cancelToken,
+        timeRetry,
+        cache,
+        cacheKey,
+        headers,
+        retries,
+      );
 
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';

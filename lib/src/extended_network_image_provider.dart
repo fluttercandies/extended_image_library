@@ -21,7 +21,15 @@ abstract class ExtendedNetworkImageProvider
     CancellationToken? cancelToken,
     String? cacheKey,
     bool printError,
+    bool cacheRawData,
   }) = network_image.ExtendedNetworkImageProvider;
+
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  ///
+  bool get cacheRawData;
 
   /// Time Limit to request image
   Duration? get timeLimit;

@@ -14,15 +14,27 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     AssetBundle? bundle,
     String? package,
     double scale = 1.0,
+    this.cacheRawData = false,
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
 
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
   @override
-  Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
-    final Completer<AssetBundleImageKey> completer =
-        Completer<AssetBundleImageKey>();
+  final bool cacheRawData;
+  @override
+  Future<ExtendedAssetBundleImageKey> obtainKey(
+      ImageConfiguration configuration) {
+    final Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      completer.complete(AssetBundleImageKey(
-          bundle: value.bundle, scale: value.scale, name: value.name));
+      completer.complete(ExtendedAssetBundleImageKey(
+        bundle: value.bundle,
+        scale: value.scale,
+        name: value.name,
+        cacheRawData: cacheRawData,
+      ));
     });
     return completer.future;
   }
@@ -66,14 +78,27 @@ class ExtendedAssetImageProvider extends AssetImage
     String assetName, {
     AssetBundle? bundle,
     String? package,
+    this.cacheRawData = false,
   }) : super(assetName, bundle: bundle, package: package);
+
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
   @override
-  Future<AssetBundleImageKey> obtainKey(ImageConfiguration configuration) {
-    final Completer<AssetBundleImageKey> completer =
-        Completer<AssetBundleImageKey>();
+  final bool cacheRawData;
+  @override
+  Future<ExtendedAssetBundleImageKey> obtainKey(
+      ImageConfiguration configuration) {
+    final Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
     super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      completer.complete(AssetBundleImageKey(
-          bundle: value.bundle, scale: value.scale, name: value.name));
+      completer.complete(ExtendedAssetBundleImageKey(
+        bundle: value.bundle,
+        scale: value.scale,
+        name: value.name,
+        cacheRawData: cacheRawData,
+      ));
     });
     return completer.future;
   }
@@ -116,22 +141,27 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
     required AssetBundle bundle,
     required String name,
     required double scale,
+    required this.cacheRawData,
   }) : super(bundle: bundle, name: name, scale: scale);
+
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  final bool cacheRawData;
+
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    if (other is ExtendedAssetBundleImageKey &&
+    return other is ExtendedAssetBundleImageKey &&
         bundle == other.bundle &&
         name == other.name &&
-        scale == other.scale) {
-      return true;
-    }
-
-    return false;
+        scale == other.scale &&
+        cacheRawData == other.cacheRawData;
   }
 
   @override
-  int get hashCode => hashValues(bundle, name, scale);
+  int get hashCode => hashValues(bundle, name, scale, cacheRawData);
 }

@@ -24,6 +24,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.width,
     this.height,
     this.allowUpscaling = false,
+    this.cacheRawData = false,
   }) : assert((compressionRatio != null &&
                 compressionRatio > 0 &&
                 compressionRatio < 1) ||
@@ -59,6 +60,13 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// to use an appropriate [Image.fit].
   final bool allowUpscaling;
 
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  @override
+  final bool cacheRawData;
+
   /// Composes the `provider` in a [ResizeImage] only when `cacheWidth` and
   /// `cacheHeight` are not both null.
   ///
@@ -72,6 +80,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     int? cacheHeight,
     double? compressionRatio,
     int? maxBytes,
+    bool cacheRawData = false,
   }) {
     if ((compressionRatio != null &&
             compressionRatio > 0 &&
@@ -85,6 +94,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         height: cacheHeight,
         maxBytes: maxBytes,
         compressionRatio: compressionRatio,
+        cacheRawData: cacheRawData,
       );
     }
     return provider;
@@ -133,12 +143,24 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       if (completer == null) {
         // This future has completed synchronously (completer was never assigned),
         // so we can directly create the synchronous result to return.
-        result = SynchronousFuture<_SizeAwareCacheKey>(
-            _SizeAwareCacheKey(key, compressionRatio, maxBytes, width, height));
+        result = SynchronousFuture<_SizeAwareCacheKey>(_SizeAwareCacheKey(
+          key,
+          compressionRatio,
+          maxBytes,
+          width,
+          height,
+          cacheRawData,
+        ));
       } else {
         // This future did not synchronously complete.
-        completer.complete(
-            _SizeAwareCacheKey(key, compressionRatio, maxBytes, width, height));
+        completer.complete(_SizeAwareCacheKey(
+          key,
+          compressionRatio,
+          maxBytes,
+          width,
+          height,
+          cacheRawData,
+        ));
       }
     });
     if (result != null) {
@@ -219,6 +241,7 @@ class _SizeAwareCacheKey {
     this.maxBytes,
     this.width,
     this.height,
+    this.cacheRawData,
   );
 
   final Object providerCacheKey;
@@ -231,6 +254,12 @@ class _SizeAwareCacheKey {
 
   final int? height;
 
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  final bool cacheRawData;
+
   @override
   bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) {
@@ -241,7 +270,8 @@ class _SizeAwareCacheKey {
         other.maxBytes == maxBytes &&
         other.compressionRatio == compressionRatio &&
         other.width == width &&
-        other.height == height;
+        other.height == height &&
+        cacheRawData == other.cacheRawData;
   }
 
   @override
@@ -251,5 +281,6 @@ class _SizeAwareCacheKey {
         compressionRatio,
         width,
         height,
+        cacheRawData,
       );
 }

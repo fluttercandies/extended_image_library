@@ -10,8 +10,17 @@ class ExtendedFileImageProvider extends FileImage
   const ExtendedFileImageProvider(
     File file, {
     double scale = 1.0,
+    this.cacheRawData = false,
   })  : assert(!kIsWeb, 'not support on web'),
         super(file, scale: scale);
+
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  @override
+  final bool cacheRawData;
+
   @override
   ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
@@ -42,14 +51,16 @@ class ExtendedFileImageProvider extends FileImage
     if (other.runtimeType != runtimeType) {
       return false;
     }
-    if (other is ExtendedFileImageProvider &&
+    return other is ExtendedFileImageProvider &&
         file.path == other.file.path &&
-        scale == other.scale) {
-      return true;
-    }
-    return false;
+        scale == other.scale &&
+        cacheRawData == other.cacheRawData;
   }
 
   @override
-  int get hashCode => hashValues(file.path, scale);
+  int get hashCode => hashValues(
+        file.path,
+        scale,
+        cacheRawData,
+      );
 }

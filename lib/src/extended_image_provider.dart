@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
+import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 
 /// The cached raw image data
@@ -7,15 +8,18 @@ Map<ExtendedImageProvider<dynamic>, Uint8List> rawImageDataMap =
     <ExtendedImageProvider<dynamic>, Uint8List>{};
 
 mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
-  // /// Whether cache raw data if you need to get raw data directly.
-  // /// For example, we need raw image data to edit,
-  // /// but [ui.Image.toByteData()] is very slow. So we cache the image
-  // /// data here.
-  // ///
-  // bool get cacheRawData;
+  /// Whether cache raw data if you need to get raw data directly.
+  /// For example, we need raw image data to edit,
+  /// but [ui.Image.toByteData()] is very slow. So we cache the image
+  /// data here.
+  ///
+  bool get cacheRawData;
 
   /// The raw data of image
   Uint8List get rawImageData {
+    assert(cacheRawData,
+        'you should set [ExtendedImageProvider.cacheRawData] to true, if you want to get rawImageData from provider.');
+
     assert(
       rawImageDataMap.containsKey(this),
       'raw image data is not already now!',
@@ -31,7 +35,10 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     Uint8List data,
     DecoderCallback decode,
   ) async {
-    rawImageDataMap[this] = data;
+    if (cacheRawData) {
+      rawImageDataMap[this] = data;
+    }
+
     return await decode(data);
   }
 
@@ -40,8 +47,12 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   Future<bool> evict({
     ImageCache? cache,
     ImageConfiguration configuration = ImageConfiguration.empty,
-  }) {
+    bool includeLive = true,
+  }) async {
     rawImageDataMap.remove(this);
-    return super.evict(cache: cache, configuration: configuration);
+
+    cache ??= imageCache;
+    final T key = await obtainKey(configuration);
+    return cache!.evict(key, includeLive: includeLive);
   }
 }
