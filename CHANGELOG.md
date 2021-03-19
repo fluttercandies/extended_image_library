@@ -1,4 +1,17 @@
-## 2.0.1-non-null-safety
+## 3.0.0
+
+* Breaking change:
+  
+  1. we cache raw image pixels as default behavior at previous versions, it's not good for heap memory usage. so add [ExtendedImageProvider.cacheRawData] to support whether should cache the raw image pixels. It's [false] now.
+
+* Improve:
+  
+  1. add [ExtendedResizeImage] to support resize image more convenient.
+  
+## 2.0.2
+
+* fix null-safety cast error
+## 2.0.1
 
 * add [ExtendedNetworkImageProvider.printError]
   
