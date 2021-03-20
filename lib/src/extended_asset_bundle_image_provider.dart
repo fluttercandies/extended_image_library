@@ -15,6 +15,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     String? package,
     double scale = 1.0,
     this.cacheRawData = false,
+    this.imageCacheName,
   }) : super(assetName, bundle: bundle, package: package, scale: scale);
 
   /// Whether cache raw data if you need to get raw data directly.
@@ -23,6 +24,10 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// data here.
   @override
   final bool cacheRawData;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String? imageCacheName;
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
@@ -34,6 +39,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
         scale: value.scale,
         name: value.name,
         cacheRawData: cacheRawData,
+        imageCacheName: imageCacheName,
       ));
     });
     return completer.future;
@@ -64,7 +70,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
     try {
       data = await key.bundle.load(key.name);
     } on FlutterError {
-      PaintingBinding.instance?.imageCache?.evict(key);
+      this.imageCache.evict(key);
       rethrow;
     }
     final Uint8List result = data.buffer.asUint8List();
@@ -79,6 +85,7 @@ class ExtendedAssetImageProvider extends AssetImage
     AssetBundle? bundle,
     String? package,
     this.cacheRawData = false,
+    this.imageCacheName,
   }) : super(assetName, bundle: bundle, package: package);
 
   /// Whether cache raw data if you need to get raw data directly.
@@ -87,6 +94,11 @@ class ExtendedAssetImageProvider extends AssetImage
   /// data here.
   @override
   final bool cacheRawData;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String? imageCacheName;
+
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
@@ -98,6 +110,7 @@ class ExtendedAssetImageProvider extends AssetImage
         scale: value.scale,
         name: value.name,
         cacheRawData: cacheRawData,
+        imageCacheName: imageCacheName,
       ));
     });
     return completer.future;
@@ -128,7 +141,7 @@ class ExtendedAssetImageProvider extends AssetImage
     try {
       data = await key.bundle.load(key.name);
     } on FlutterError {
-      PaintingBinding.instance?.imageCache?.evict(key);
+      this.imageCache.evict(key);
       rethrow;
     }
     final Uint8List result = data.buffer.asUint8List();
@@ -142,6 +155,7 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
     required String name,
     required double scale,
     required this.cacheRawData,
+    required this.imageCacheName,
   }) : super(bundle: bundle, name: name, scale: scale);
 
   /// Whether cache raw data if you need to get raw data directly.
@@ -149,6 +163,10 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   /// but [ui.Image.toByteData()] is very slow. So we cache the image
   /// data here.
   final bool cacheRawData;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+
+  final String? imageCacheName;
 
   @override
   bool operator ==(dynamic other) {
@@ -159,9 +177,9 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
         bundle == other.bundle &&
         name == other.name &&
         scale == other.scale &&
-        cacheRawData == other.cacheRawData;
+        cacheRawData == other.cacheRawData && imageCacheName== other.imageCacheName;
   }
 
   @override
-  int get hashCode => hashValues(bundle, name, scale, cacheRawData);
+  int get hashCode => hashValues(bundle, name, scale, cacheRawData,imageCacheName);
 }

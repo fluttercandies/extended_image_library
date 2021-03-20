@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:extended_image_library/extended_image_library.dart';
 import 'package:flutter/widgets.dart';
 
 import 'extended_network_image_provider.dart';
@@ -14,13 +15,29 @@ export '_platform_io.dart' if (dart.library.html) '_platform_web.dart';
 const String cacheImageFolderName = 'cacheimage';
 
 ///clear all of image in memory
-void clearMemoryImageCache() {
-  PaintingBinding.instance?.imageCache?.clear();
+void clearMemoryImageCache([String? name]) {
+  if (name != null) {
+    if (imageCaches.containsKey(name)) {
+      imageCaches[name]!.clear();
+      imageCaches[name]!.clearLiveImages();
+    }
+  } else {
+    PaintingBinding.instance?.imageCache?.clear();
+    PaintingBinding.instance?.imageCache?.clearLiveImages();
+  }
 }
 
 /// get ImageCache
-ImageCache? getMemoryImageCache() {
-  return PaintingBinding.instance?.imageCache;
+ImageCache? getMemoryImageCache([String? name]) {
+  if (name != null) {
+    if (imageCaches.containsKey(name)) {
+      return imageCaches[name];
+    } else {
+      return null;
+    }
+  } else {
+    return PaintingBinding.instance?.imageCache;
+  }
 }
 
 /// get network image data from cached

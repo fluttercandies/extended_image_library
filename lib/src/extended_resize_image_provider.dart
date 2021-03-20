@@ -25,6 +25,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.height,
     this.allowUpscaling = false,
     this.cacheRawData = false,
+    this.imageCacheName,
   }) : assert((compressionRatio != null &&
                 compressionRatio > 0 &&
                 compressionRatio < 1) ||
@@ -67,6 +68,10 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   @override
   final bool cacheRawData;
 
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String? imageCacheName;
+
   /// Composes the `provider` in a [ResizeImage] only when `cacheWidth` and
   /// `cacheHeight` are not both null.
   ///
@@ -81,6 +86,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     double? compressionRatio,
     int? maxBytes,
     bool cacheRawData = false,
+    String? imageCacheName,
   }) {
     if ((compressionRatio != null &&
             compressionRatio > 0 &&
@@ -95,6 +101,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         maxBytes: maxBytes,
         compressionRatio: compressionRatio,
         cacheRawData: cacheRawData,
+        imageCacheName: imageCacheName,
       );
     }
     return provider;
@@ -150,6 +157,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
           width,
           height,
           cacheRawData,
+          imageCacheName,
         ));
       } else {
         // This future did not synchronously complete.
@@ -160,6 +168,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
           width,
           height,
           cacheRawData,
+          imageCacheName,
         ));
       }
     });
@@ -242,6 +251,7 @@ class _SizeAwareCacheKey {
     this.width,
     this.height,
     this.cacheRawData,
+    this.imageCacheName,
   );
 
   final Object providerCacheKey;
@@ -260,6 +270,10 @@ class _SizeAwareCacheKey {
   /// data here.
   final bool cacheRawData;
 
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+
+  final String? imageCacheName;
+
   @override
   bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) {
@@ -271,7 +285,8 @@ class _SizeAwareCacheKey {
         other.compressionRatio == compressionRatio &&
         other.width == width &&
         other.height == height &&
-        cacheRawData == other.cacheRawData;
+        cacheRawData == other.cacheRawData &&
+        imageCacheName == other.imageCacheName;
   }
 
   @override
@@ -282,5 +297,6 @@ class _SizeAwareCacheKey {
         width,
         height,
         cacheRawData,
+        imageCacheName,
       );
 }

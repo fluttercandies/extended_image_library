@@ -11,6 +11,7 @@ class ExtendedFileImageProvider extends FileImage
     File file, {
     double scale = 1.0,
     this.cacheRawData = false,
+    this.imageCacheName,
   })  : assert(!kIsWeb, 'not support on web'),
         super(file, scale: scale);
 
@@ -21,6 +22,9 @@ class ExtendedFileImageProvider extends FileImage
   @override
   final bool cacheRawData;
 
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String? imageCacheName;
   @override
   ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
@@ -39,7 +43,7 @@ class ExtendedFileImageProvider extends FileImage
 
     if (bytes.lengthInBytes == 0) {
       // The file may become available later.
-      PaintingBinding.instance?.imageCache?.evict(key);
+      this.imageCache.evict(key);
       throw StateError('$file is empty and cannot be loaded as an image.');
     }
 
@@ -54,7 +58,7 @@ class ExtendedFileImageProvider extends FileImage
     return other is ExtendedFileImageProvider &&
         file.path == other.file.path &&
         scale == other.scale &&
-        cacheRawData == other.cacheRawData;
+        cacheRawData == other.cacheRawData && imageCacheName == other.imageCacheName;
   }
 
   @override
@@ -62,5 +66,6 @@ class ExtendedFileImageProvider extends FileImage
         file.path,
         scale,
         cacheRawData,
+        imageCacheName,
       );
 }

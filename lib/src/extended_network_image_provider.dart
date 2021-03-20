@@ -22,7 +22,12 @@ abstract class ExtendedNetworkImageProvider
     String? cacheKey,
     bool printError,
     bool cacheRawData,
+    String? imageCacheName,
   }) = network_image.ExtendedNetworkImageProvider;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+
+  String? get imageCacheName;
 
   /// Whether cache raw data if you need to get raw data directly.
   /// For example, we need raw image data to edit,

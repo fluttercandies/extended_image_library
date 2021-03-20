@@ -30,7 +30,12 @@ class ExtendedNetworkImageProvider
     this.printError = true,
     this.cacheRawData = false,
     this.cancelToken,
+    this.imageCacheName,
   });
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String? imageCacheName;
 
   /// Whether cache raw data if you need to get raw data directly.
   /// For example, we need raw image data to edit,
@@ -285,7 +290,8 @@ class ExtendedNetworkImageProvider
         cache == other.cache &&
         cacheKey == other.cacheKey &&
         headers == other.headers &&
-        retries == other.retries;
+        retries == other.retries &&
+        imageCacheName == other.imageCacheName;
   }
 
   @override
@@ -300,6 +306,7 @@ class ExtendedNetworkImageProvider
         cacheKey,
         headers,
         retries,
+        imageCacheName,
       );
 
   @override
