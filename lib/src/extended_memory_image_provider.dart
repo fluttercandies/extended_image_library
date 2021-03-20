@@ -9,6 +9,7 @@ class ExtendedMemoryImageProvider extends MemoryImage
     Uint8List bytes, {
     double scale = 1.0,
     this.cacheRawData = false,
+    this.imageCacheName,
   }) : super(bytes, scale: scale);
 
   /// Whether cache raw data if you need to get raw data directly.
@@ -17,6 +18,13 @@ class ExtendedMemoryImageProvider extends MemoryImage
   /// data here.
   @override
   final bool cacheRawData;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String imageCacheName;
+
+  @override
+  Uint8List get rawImageData => bytes;
 
   @override
   ImageStreamCompleter load(MemoryImage key, DecoderCallback decode) {
@@ -32,9 +40,6 @@ class ExtendedMemoryImageProvider extends MemoryImage
   }
 
   @override
-  Uint8List get rawImageData => bytes;
-
-  @override
   bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) {
       return false;
@@ -42,7 +47,8 @@ class ExtendedMemoryImageProvider extends MemoryImage
     return other is ExtendedMemoryImageProvider &&
         other.bytes == bytes &&
         other.scale == scale &&
-        cacheRawData == other.cacheRawData;
+        cacheRawData == other.cacheRawData &&
+        imageCacheName == other.imageCacheName;
   }
 
   @override
@@ -50,5 +56,6 @@ class ExtendedMemoryImageProvider extends MemoryImage
         bytes.hashCode,
         scale,
         cacheRawData,
+        imageCacheName,
       );
 }

@@ -35,6 +35,7 @@ class ExtendedNetworkImageProvider
     this.cacheKey,
     this.printError = true,
     this.cacheRawData = false,
+    this.imageCacheName,
   });
 
   @override
@@ -45,6 +46,35 @@ class ExtendedNetworkImageProvider
 
   @override
   final Map<String, String> headers;
+
+  @override
+  final bool cache;
+
+  @override
+  final CancellationToken cancelToken;
+
+  @override
+  final int retries;
+
+  @override
+  final Duration timeLimit;
+
+  @override
+  final Duration timeRetry;
+
+  @override
+  final String cacheKey;
+
+  /// print error
+  @override
+  final bool printError;
+
+  @override
+  final bool cacheRawData;
+
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  @override
+  final String imageCacheName;
 
   @override
   Future<ExtendedNetworkImageProvider> obtainKey(
@@ -106,7 +136,8 @@ class ExtendedNetworkImageProvider
     return other is ExtendedNetworkImageProvider &&
         url == other.url &&
         scale == other.scale &&
-        cacheRawData == other.cacheRawData;
+        cacheRawData == other.cacheRawData &&
+        imageCacheName == other.imageCacheName;
   }
 
   @override
@@ -114,32 +145,11 @@ class ExtendedNetworkImageProvider
         url,
         scale,
         cacheRawData,
+        imageCacheName,
       );
 
   @override
   String toString() => '$runtimeType("$url", scale: $scale, cacheRawData)';
-
-  @override
-  final bool cache;
-
-  @override
-  final CancellationToken cancelToken;
-
-  @override
-  final int retries;
-
-  @override
-  final Duration timeLimit;
-
-  @override
-  final Duration timeRetry;
-
-  @override
-  final String cacheKey;
-
-  /// print error
-  @override
-  final bool printError;
 
   // not support on web
   @override
@@ -150,7 +160,4 @@ class ExtendedNetworkImageProvider
   }
 
   static dynamic get httpClient => null;
-
-  @override
-  final bool cacheRawData;
 }
