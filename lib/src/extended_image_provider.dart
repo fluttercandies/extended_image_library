@@ -17,7 +17,7 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   ///
   bool get cacheRawData;
 
-  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
+  /// The name of [ImageCache], you can define custom [ImageCache] to store this image.
   String? get imageCacheName;
 
   /// The [ImageCache] which this is stored in it.

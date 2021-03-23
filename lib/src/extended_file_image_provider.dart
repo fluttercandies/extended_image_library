@@ -58,7 +58,8 @@ class ExtendedFileImageProvider extends FileImage
     return other is ExtendedFileImageProvider &&
         file.path == other.file.path &&
         scale == other.scale &&
-        cacheRawData == other.cacheRawData && imageCacheName == other.imageCacheName;
+        cacheRawData == other.cacheRawData &&
+        imageCacheName == other.imageCacheName;
   }
 
   @override
