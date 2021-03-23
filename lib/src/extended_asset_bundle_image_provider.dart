@@ -182,6 +182,11 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   }
 
   @override
-  int get hashCode =>
-      hashValues(bundle, name, scale, cacheRawData, imageCacheName);
+  int get hashCode => hashValues(
+        bundle,
+        name,
+        scale,
+        cacheRawData,
+        imageCacheName,
+      );
 }

@@ -20,6 +20,7 @@ void clearMemoryImageCache([String name]) {
     if (imageCaches.containsKey(name)) {
       imageCaches[name].clear();
       imageCaches[name].clearLiveImages();
+      imageCaches.remove(name);
     }
   } else {
     PaintingBinding.instance?.imageCache?.clear();
