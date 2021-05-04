@@ -1,3 +1,9 @@
+## 3.1.0-non-null-safety
+
+* Improve:
+
+  1. add [ExtendedNetworkImageProvider.cacheMaxAge] to set max age to be cached.
+   
 ## 3.0.0-non-null-safety
 
 * Breaking change:

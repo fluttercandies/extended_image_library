@@ -36,6 +36,7 @@ class ExtendedNetworkImageProvider
     this.printError = true,
     this.cacheRawData = false,
     this.imageCacheName,
+    this.cacheMaxAge,
   });
 
   @override
@@ -75,6 +76,11 @@ class ExtendedNetworkImageProvider
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
   @override
   final String imageCacheName;
+
+  /// The duration before local cache is expired.
+  /// After this time the cache is expired and the image is reloaded.
+  @override
+  final Duration cacheMaxAge;
 
   @override
   Future<ExtendedNetworkImageProvider> obtainKey(
