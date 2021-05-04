@@ -31,6 +31,7 @@ class ExtendedNetworkImageProvider
     this.cacheRawData = false,
     this.cancelToken,
     this.imageCacheName,
+    this.cacheMaxAge,
   });
 
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
@@ -84,6 +85,11 @@ class ExtendedNetworkImageProvider
   @override
   final bool printError;
 
+  /// The max duration to cahce image.
+  /// After this time the cache is expired and the image is reloaded.
+  @override
+  final Duration? cacheMaxAge;
+
   @override
   ImageStreamCompleter load(
       image_provider.ExtendedNetworkImageProvider key, DecoderCallback decode) {
@@ -118,9 +124,10 @@ class ExtendedNetworkImageProvider
   }
 
   Future<ui.Codec> _loadAsync(
-      ExtendedNetworkImageProvider key,
-      StreamController<ImageChunkEvent> chunkEvents,
-      DecoderCallback decode) async {
+    ExtendedNetworkImageProvider key,
+    StreamController<ImageChunkEvent> chunkEvents,
+    DecoderCallback decode,
+  ) async {
     assert(key == this);
     final String md5Key = cacheKey ?? keyToMd5(key.url);
     ui.Codec? result;
@@ -174,11 +181,22 @@ class ExtendedNetworkImageProvider
   ) async {
     final Directory _cacheImagesDirectory = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
+    Uint8List? data;
     // exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
       final File cacheFlie = File(join(_cacheImagesDirectory.path, md5Key));
       if (cacheFlie.existsSync()) {
-        return await cacheFlie.readAsBytes();
+        if (key.cacheMaxAge != null) {
+          final DateTime now = DateTime.now();
+          final FileStat fs = cacheFlie.statSync();
+          if (now.subtract(key.cacheMaxAge!).isAfter(fs.changed)) {
+            cacheFlie.deleteSync(recursive: true);
+          } else {
+            data = await cacheFlie.readAsBytes();
+          }
+        } else {
+          data = await cacheFlie.readAsBytes();
+        }
       }
     }
     // create folder
@@ -186,17 +204,18 @@ class ExtendedNetworkImageProvider
       await _cacheImagesDirectory.create();
     }
     // load from network
-    final Uint8List? data = await _loadNetwork(
-      key,
-      chunkEvents,
-    );
-    if (data != null) {
-      // cache image file
-      await File(join(_cacheImagesDirectory.path, md5Key)).writeAsBytes(data);
-      return data;
+    if (data == null) {
+      data = await _loadNetwork(
+        key,
+        chunkEvents,
+      );
+      if (data != null) {
+        // cache image file
+        await File(join(_cacheImagesDirectory.path, md5Key)).writeAsBytes(data);
+      }
     }
 
-    return null;
+    return data;
   }
 
   /// Get the image from network.
@@ -291,7 +310,8 @@ class ExtendedNetworkImageProvider
         cacheKey == other.cacheKey &&
         headers == other.headers &&
         retries == other.retries &&
-        imageCacheName == other.imageCacheName;
+        imageCacheName == other.imageCacheName &&
+        cacheMaxAge == other.cacheMaxAge;
   }
 
   @override
@@ -307,6 +327,7 @@ class ExtendedNetworkImageProvider
         headers,
         retries,
         imageCacheName,
+        cacheMaxAge,
       );
 
   @override
