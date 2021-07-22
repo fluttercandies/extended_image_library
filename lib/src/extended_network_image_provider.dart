@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
+
 import '_network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
     as network_image;
 
@@ -23,7 +25,6 @@ abstract class ExtendedNetworkImageProvider
     bool printError,
     bool cacheRawData,
     String? imageCacheName,
-    Duration? cacheMaxAge,
   }) = network_image.ExtendedNetworkImageProvider;
 
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
@@ -66,10 +67,6 @@ abstract class ExtendedNetworkImageProvider
 
   /// print error
   bool get printError;
-
-  /// The max duration to cahce image.
-  /// After this time the cache is expired and the image is reloaded.
-  Duration? get cacheMaxAge;
 
   @override
   ImageStreamCompleter load(
