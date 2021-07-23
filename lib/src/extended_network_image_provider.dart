@@ -82,6 +82,11 @@ abstract class ExtendedNetworkImageProvider
     StreamController<ImageChunkEvent>? chunkEvents,
   });
 
+  @override
+  Future<bool> evict(
+      {ImageCache? cache,
+      ImageConfiguration configuration = ImageConfiguration.empty});
+
   ///HttpClient for network, it's null on web
   static dynamic get httpClient =>
       network_image.ExtendedNetworkImageProvider.httpClient;

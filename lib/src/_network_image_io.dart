@@ -36,6 +36,8 @@ class ExtendedNetworkImageProvider
     this.cacheMaxAge,
   });
 
+  static final Map<String, String> _lockCache = <String, String>{};
+
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
   @override
   final String? imageCacheName;
@@ -125,6 +127,19 @@ class ExtendedNetworkImageProvider
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
+  @override
+  Future<bool> evict({
+    ImageCache? cache,
+    ImageConfiguration configuration = ImageConfiguration.empty,
+    bool includeLive = true,
+  }) async {
+    rawImageDataMap.remove(this);
+    cache ??= this.imageCache;
+    final ExtendedNetworkImageProvider key = await obtainKey(configuration);
+    _lockCache.remove(key.url);
+    return cache.evict(key, includeLive: includeLive);
+  }
+
   Future<ui.Codec> _loadAsync(
     ExtendedNetworkImageProvider key,
     StreamController<ImageChunkEvent> chunkEvents,
@@ -182,9 +197,8 @@ class ExtendedNetworkImageProvider
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';
 
-  @override
-
   /// Get network image data from cached
+  @override
   Future<Uint8List?> getNetworkImageData({
     StreamController<ImageChunkEvent>? chunkEvents,
   }) async {
@@ -212,9 +226,9 @@ class ExtendedNetworkImageProvider
     // create req
     final HttpClientResponse? checkResp = await _retryRequest(uri);
 
-    final String rawFileName = cacheKey ?? keyToMd5(url);
+    final String rawFileKey = cacheKey ?? keyToMd5(url);
     final Directory parentDir = await _getCacheDir();
-    final File rawFile = _childFile(parentDir, rawFileName);
+    final File rawFile = _childFile(parentDir, rawFileKey);
 
     if (checkResp == null || checkResp.statusCode != HttpStatus.ok) {
       // if request error, use cache.
@@ -236,8 +250,6 @@ class ExtendedNetworkImageProvider
         // no cache, download now.
         return await _rw(checkResp, chunkEvents, null);
       } else {
-        final File lockFile = _childFile(parentDir, '$rawFileName.lock');
-        final bool exist = lockFile.existsSync();
         String maxAgeKey = 'max-age';
         if (cacheControl.contains(maxAgeKey)) {
           // if exist s-maxage, override max-age, use cdn max-age
@@ -253,21 +265,30 @@ class ExtendedNetworkImageProvider
           final int maxAge = int.parse(seconds) * 1000;
           final String newFlag =
               '${checkResp.headers.value(HttpHeaders.etagHeader).toString()}_${checkResp.headers.value(HttpHeaders.lastModifiedHeader).toString()}';
-          final int now = DateTime.now().millisecondsSinceEpoch;
-          if (exist) {
-            final String lockStr = await lockFile.readAsString();
-            if (lockStr.isNotEmpty) {
-              final List<String> split = lockStr.split('@');
-              final String flag = split[1];
-              final int lastReqAt = int.parse(split[0]);
-              if (flag != newFlag || lastReqAt + maxAge < now) {
-                isExpired = true;
-              }
+          final File lockFile = _childFile(parentDir, '$rawFileKey.lock');
+          String? lockStr = _lockCache[url];
+          if (lockStr == null) {
+            // never empty or blank.
+            if (lockFile.existsSync()) {
+              lockStr = await lockFile.readAsString();
+            } else {
+              await lockFile.create();
             }
-          } else {
-            await lockFile.create();
           }
-          await lockFile.writeAsString(<dynamic>[now, newFlag].join('@'));
+          final int millis = DateTime.now().millisecondsSinceEpoch;
+          if (lockStr != null) {
+            //never empty or blank
+            final List<String> split = lockStr.split('@');
+            final String flag = split[1];
+            final int lastReqAt = int.parse(split[0]);
+            if (flag != newFlag || lastReqAt + maxAge < millis) {
+              isExpired = true;
+            }
+          }
+          final String newLockStr = <dynamic>[millis, newFlag].join('@');
+          _lockCache[url] = newLockStr;
+          // we don't care lock str already written in file.
+          lockFile.writeAsString(newLockStr);
         }
       }
     }
@@ -275,9 +296,8 @@ class ExtendedNetworkImageProvider
       // if not expired and exist file, just return.
       if (rawFile.existsSync()) {
         if (cacheMaxAge != null) {
-          final DateTime now = DateTime.now();
           final FileStat fs = rawFile.statSync();
-          if (now.subtract(cacheMaxAge!).isBefore(fs.changed)) {
+          if (DateTime.now().subtract(cacheMaxAge!).isBefore(fs.changed)) {
             return await rawFile.readAsBytes();
           }
         } else {
@@ -289,7 +309,7 @@ class ExtendedNetworkImageProvider
     final bool breakpointTransmission =
         checkResp.headers.value(HttpHeaders.acceptRangesHeader) == 'bytes' &&
             checkResp.contentLength > 0;
-    final File tempFile = _childFile(parentDir, '$rawFileName.temp');
+    final File tempFile = _childFile(parentDir, '$rawFileKey.temp');
     Uint8List? bytes;
     // if not expired && is support breakpoint transmission && temp file exists
     if (!isExpired && breakpointTransmission && tempFile.existsSync()) {
