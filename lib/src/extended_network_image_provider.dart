@@ -25,6 +25,7 @@ abstract class ExtendedNetworkImageProvider
     bool printError,
     bool cacheRawData,
     String? imageCacheName,
+    Duration? cacheMaxAge,
   }) = network_image.ExtendedNetworkImageProvider;
 
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
@@ -67,6 +68,10 @@ abstract class ExtendedNetworkImageProvider
 
   /// print error
   bool get printError;
+
+  /// The max duration to cache image.
+  /// After this time the cache is expired and the image is reloaded.
+  Duration? get cacheMaxAge;
 
   @override
   ImageStreamCompleter load(

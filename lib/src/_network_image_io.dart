@@ -33,6 +33,7 @@ class ExtendedNetworkImageProvider
     this.cacheRawData = false,
     this.cancelToken,
     this.imageCacheName,
+    this.cacheMaxAge,
   });
 
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
@@ -85,6 +86,11 @@ class ExtendedNetworkImageProvider
   /// print error
   @override
   final bool printError;
+
+  /// The max duration to cache image.
+  /// After this time the cache is expired and the image is reloaded.
+  @override
+  final Duration? cacheMaxAge;
 
   @override
   ImageStreamCompleter load(
@@ -188,8 +194,7 @@ class ExtendedNetworkImageProvider
   Future<Directory> _getCacheDir() async {
     final Directory dir = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
-    // ignore: avoid_slow_async_io
-    if (!await dir.exists()) {
+    if (!dir.existsSync()) {
       await dir.create(recursive: true);
     }
     return dir;
@@ -206,15 +211,22 @@ class ExtendedNetworkImageProvider
     final Uri uri = Uri.parse(url);
     // create req
     final HttpClientResponse? checkResp = await _retryRequest(uri);
-    if (checkResp == null) {
-      return null;
-    }
-    if (!cache) {
-      return await _rw(checkResp, chunkEvents, null);
-    }
+
     final String rawFileName = cacheKey ?? keyToMd5(url);
     final Directory parentDir = await _getCacheDir();
     final File rawFile = _childFile(parentDir, rawFileName);
+
+    if (checkResp == null || checkResp.statusCode != HttpStatus.ok) {
+      // if request error, use cache.
+      if (cache && rawFile.existsSync()) {
+        return await rawFile.readAsBytes();
+      }
+      return null;
+    }
+
+    if (!cache) {
+      return await _rw(checkResp, chunkEvents, null);
+    }
 
     bool isExpired = false;
     final String? cacheControl =
@@ -222,19 +234,19 @@ class ExtendedNetworkImageProvider
     if (cacheControl != null) {
       if (cacheControl.contains('no-store')) {
         // no cache, download now.
-        return await _rw(checkResp, chunkEvents, rawFile);
+        return await _rw(checkResp, chunkEvents, null);
       } else {
         final File lockFile = _childFile(parentDir, '$rawFileName.lock');
-        // ignore: avoid_slow_async_io
-        final bool exist = await lockFile.exists();
+        final bool exist = lockFile.existsSync();
         String maxAgeKey = 'max-age';
         if (cacheControl.contains(maxAgeKey)) {
+          // if exist s-maxage, override max-age, use cdn max-age
           if (cacheControl.contains('s-maxage')) {
             maxAgeKey = 's-maxage';
           }
           final String maxAgeStr = cacheControl
               .split(' ')
-              .firstWhere((String element) => element.contains(maxAgeKey))
+              .firstWhere((String str) => str.contains(maxAgeKey))
               .split('=')[1]
               .trim();
           final String seconds = RegExp(r'\d+').stringMatch(maxAgeStr)!;
@@ -261,23 +273,26 @@ class ExtendedNetworkImageProvider
     }
     if (!isExpired) {
       // if not expired and exist file, just return.
-      // ignore: avoid_slow_async_io
-      if (await rawFile.exists()) {
-        return await rawFile.readAsBytes();
+      if (rawFile.existsSync()) {
+        if (cacheMaxAge != null) {
+          final DateTime now = DateTime.now();
+          final FileStat fs = rawFile.statSync();
+          if (now.subtract(cacheMaxAge!).isBefore(fs.changed)) {
+            return await rawFile.readAsBytes();
+          }
+        } else {
+          return await rawFile.readAsBytes();
+        }
       }
     }
-    // request error
-    if (checkResp.statusCode != HttpStatus.ok) {
-      return null;
-    }
+
     final bool breakpointTransmission =
         checkResp.headers.value(HttpHeaders.acceptRangesHeader) == 'bytes' &&
             checkResp.contentLength > 0;
     final File tempFile = _childFile(parentDir, '$rawFileName.temp');
     Uint8List? bytes;
-    // if not expired and is support breakpoint transmission and temp file exists
-    // ignore: avoid_slow_async_io
-    if (!isExpired && breakpointTransmission && await tempFile.exists()) {
+    // if not expired && is support breakpoint transmission && temp file exists
+    if (!isExpired && breakpointTransmission && tempFile.existsSync()) {
       final int length = await tempFile.length();
       final HttpClientResponse? resp =
           await _retryRequest(uri, callRequest: (HttpClientRequest req) {
