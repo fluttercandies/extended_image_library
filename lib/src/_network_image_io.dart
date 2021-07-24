@@ -38,6 +38,24 @@ class ExtendedNetworkImageProvider
 
   static final Map<String, String> _lockCache = <String, String>{};
 
+  // Do not access this field directly; use [_httpClient] instead.
+  // We set `autoUncompress` to false to ensure that we can trust the value of
+  // the `Content-Length` HTTP header. We automatically uncompress the content
+  // in our call to [consolidateHttpClientResponseBytes].
+  static final HttpClient _sharedHttpClient = HttpClient()
+    ..autoUncompress = false;
+
+  static HttpClient get httpClient {
+    HttpClient client = _sharedHttpClient;
+    assert(() {
+      if (debugNetworkImageHttpClientProvider != null) {
+        client = debugNetworkImageHttpClientProvider!();
+      }
+      return true;
+    }());
+    return client;
+  }
+
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
   @override
   final String? imageCacheName;
@@ -158,51 +176,6 @@ class ExtendedNetworkImageProvider
       }
       return Future<ui.Codec>.error(StateError('Failed to load $url.'));
     }
-  }
-
-  @override
-  bool operator ==(dynamic other) {
-    if (other.runtimeType != runtimeType) {
-      return false;
-    }
-    return other is ExtendedNetworkImageProvider &&
-        url == other.url &&
-        scale == other.scale &&
-        cacheRawData == other.cacheRawData &&
-        timeLimit == other.timeLimit &&
-        cancelToken == other.cancelToken &&
-        timeRetry == other.timeRetry &&
-        cache == other.cache &&
-        cacheKey == other.cacheKey &&
-        headers == other.headers &&
-        retries == other.retries &&
-        imageCacheName == other.imageCacheName;
-  }
-
-  @override
-  int get hashCode => hashValues(
-        url,
-        scale,
-        cacheRawData,
-        timeLimit,
-        cancelToken,
-        timeRetry,
-        cache,
-        cacheKey,
-        headers,
-        retries,
-        imageCacheName,
-      );
-
-  @override
-  String toString() => '$runtimeType("$url", scale: $scale)';
-
-  /// Get network image data from cached
-  @override
-  Future<Uint8List?> getNetworkImageData({
-    StreamController<ImageChunkEvent>? chunkEvents,
-  }) async {
-    return await _(url, chunkEvents);
   }
 
   Future<Directory> _getCacheDir() async {
@@ -355,6 +328,7 @@ class ExtendedNetworkImageProvider
         return await _rw(resp, rawFile, tempFile, chunkEvents: chunkEvents);
       } else {
         // request error.
+        resp.listen(null);
         return null;
       }
     } else {
@@ -448,23 +422,50 @@ class ExtendedNetworkImageProvider
     );
   }
 
-  // Do not access this field directly; use [_httpClient] instead.
-  // We set `autoUncompress` to false to ensure that we can trust the value of
-  // the `Content-Length` HTTP header. We automatically uncompress the content
-  // in our call to [consolidateHttpClientResponseBytes].
-  static final HttpClient _sharedHttpClient = HttpClient()
-    ..autoUncompress = false;
-
-  static HttpClient get httpClient {
-    HttpClient client = _sharedHttpClient;
-    assert(() {
-      if (debugNetworkImageHttpClientProvider != null) {
-        client = debugNetworkImageHttpClientProvider!();
-      }
-      return true;
-    }());
-    return client;
+  /// Get network image data from cached
+  @override
+  Future<Uint8List?> getNetworkImageData({
+    StreamController<ImageChunkEvent>? chunkEvents,
+  }) async {
+    return await _(url, chunkEvents);
   }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is ExtendedNetworkImageProvider &&
+        url == other.url &&
+        scale == other.scale &&
+        cacheRawData == other.cacheRawData &&
+        timeLimit == other.timeLimit &&
+        cancelToken == other.cancelToken &&
+        timeRetry == other.timeRetry &&
+        cache == other.cache &&
+        cacheKey == other.cacheKey &&
+        headers == other.headers &&
+        retries == other.retries &&
+        imageCacheName == other.imageCacheName;
+  }
+
+  @override
+  int get hashCode => hashValues(
+        url,
+        scale,
+        cacheRawData,
+        timeLimit,
+        cancelToken,
+        timeRetry,
+        cache,
+        cacheKey,
+        headers,
+        retries,
+        imageCacheName,
+      );
+
+  @override
+  String toString() => '$runtimeType("$url", scale: $scale)';
 }
 
 typedef _BeforeRequest = void Function(HttpClientRequest request);
