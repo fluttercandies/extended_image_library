@@ -422,9 +422,8 @@ class ExtendedNetworkImageProvider
         onBytesReceived: chunkEvents != null
             ? (int cumulative, int? total) {
                 chunkEvents.add(ImageChunkEvent(
-                  cumulativeBytesLoaded: cumulative + loadedLength,
-                  expectedTotalBytes:
-                      total == null ? null : total + loadedLength,
+                  cumulativeBytesLoaded: cumulative,
+                  expectedTotalBytes: total,
                 ));
               }
             : null,
