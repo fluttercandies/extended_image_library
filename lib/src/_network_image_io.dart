@@ -128,6 +128,7 @@ class ExtendedNetworkImageProvider
         decode,
       ),
       scale: key.scale,
+      debugLabel: key.url,
       chunkEvents: chunkEvents.stream,
       informationCollector: () {
         return <DiagnosticsNode>[
@@ -353,6 +354,8 @@ class ExtendedNetworkImageProvider
         : await _rw(resp, rawFile, tempFile, chunkEvents: chunkEvents);
   }
 
+  late StreamSubscription<List<int>> _subscription;
+
   Future<Uint8List> _rw(
     HttpClientResponse response,
     File rawFile,
@@ -361,22 +364,74 @@ class ExtendedNetworkImageProvider
     int loadedLength = 0,
     FileMode fileMode = FileMode.write,
   }) async {
-    final Uint8List bytes = await consolidateHttpClientResponseBytes(
-      response,
-      onBytesReceived: chunkEvents != null
-          ? (int cumulative, int? total) {
-              chunkEvents.add(ImageChunkEvent(
-                cumulativeBytesLoaded: cumulative + loadedLength,
-                expectedTotalBytes: total == null ? null : total + loadedLength,
+    final Completer<Uint8List> completer = Completer<Uint8List>();
+    if (tempFile != null) {
+      int received = loadedLength;
+      final bool compressed = response.compressionState ==
+          HttpClientResponseCompressionState.compressed;
+      final int? total = compressed || response.contentLength < 0
+          ? null
+          : response.contentLength;
+      final RandomAccessFile raf = await tempFile.open(mode: fileMode);
+      _subscription = response.listen(
+        (List<int> bytes) {
+          _subscription.pause();
+          raf.setPositionSync(received);
+          raf.writeFrom(bytes).then((RandomAccessFile _raf) {
+            received += bytes.length;
+            chunkEvents?.add(ImageChunkEvent(
+              cumulativeBytesLoaded: received,
+              expectedTotalBytes: total,
+            ));
+            _subscription.resume();
+          }).catchError((dynamic err, StackTrace stackTrace) async {
+            await _subscription.cancel();
+          });
+        },
+        onDone: () async {
+          try {
+            await raf.close();
+            Uint8List buffer = await tempFile.readAsBytes();
+            if (compressed) {
+              final List<int> convert = gzip.decoder.convert(buffer);
+              buffer = Uint8List.fromList(convert);
+              await tempFile.writeAsBytes(convert);
+              chunkEvents?.add(ImageChunkEvent(
+                cumulativeBytesLoaded: buffer.length,
+                expectedTotalBytes: buffer.length,
               ));
             }
-          : null,
-    );
-    if (tempFile != null) {
-      await tempFile.writeAsBytes(bytes, mode: fileMode);
-      await tempFile.rename(rawFile.path);
+            await tempFile.rename(rawFile.path);
+            completer.complete(buffer);
+          } catch (e) {
+            completer.completeError(e);
+          }
+        },
+        onError: (Object err, StackTrace stackTrace) async {
+          try {
+            await raf.close();
+          } finally {
+            completer.completeError(err, stackTrace);
+          }
+        },
+        cancelOnError: true,
+      );
+    } else {
+      final Uint8List bytes = await consolidateHttpClientResponseBytes(
+        response,
+        onBytesReceived: chunkEvents != null
+            ? (int cumulative, int? total) {
+                chunkEvents.add(ImageChunkEvent(
+                  cumulativeBytesLoaded: cumulative + loadedLength,
+                  expectedTotalBytes:
+                      total == null ? null : total + loadedLength,
+                ));
+              }
+            : null,
+      );
+      completer.complete(bytes);
     }
-    return bytes;
+    return completer.future;
   }
 
   Future<HttpClientResponse> _createNewRequest(
@@ -446,7 +501,8 @@ class ExtendedNetworkImageProvider
         cacheKey == other.cacheKey &&
         headers == other.headers &&
         retries == other.retries &&
-        imageCacheName == other.imageCacheName;
+        imageCacheName == other.imageCacheName &&
+        cacheMaxAge == other.cacheMaxAge;
   }
 
   @override
@@ -462,6 +518,7 @@ class ExtendedNetworkImageProvider
         headers,
         retries,
         imageCacheName,
+        cacheMaxAge,
       );
 
   @override
