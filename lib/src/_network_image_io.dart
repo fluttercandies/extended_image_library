@@ -223,24 +223,29 @@ class ExtendedNetworkImageProvider
     StreamController<ImageChunkEvent>? chunkEvents,
   ) async {
     final Uri uri = Uri.parse(url);
-    // create req
-    final HttpClientResponse? checkResp = await _retryRequest(uri);
+
+    final bool noCache = !cache;
+    final HttpClientResponse? checkResp =
+        await _retryRequest(uri, withBody: noCache);
 
     final String rawFileKey = cacheKey ?? keyToMd5(url);
     final Directory parentDir = await _getCacheDir();
     final File rawFile = _childFile(parentDir, rawFileKey);
 
+    // if request error, use cache.
     if (checkResp == null || checkResp.statusCode != HttpStatus.ok) {
-      // if request error, use cache.
-      if (cache && rawFile.existsSync()) {
+      if (rawFile.existsSync()) {
         return await rawFile.readAsBytes();
       }
       return null;
     }
 
-    if (!cache) {
-      return await _rw(checkResp, chunkEvents, null);
+    if (noCache) {
+      return await _rw(checkResp, rawFile, null, chunkEvents: chunkEvents);
     }
+
+    // consuming response.
+    checkResp.listen(null);
 
     bool isExpired = false;
     final String? cacheControl =
@@ -248,7 +253,7 @@ class ExtendedNetworkImageProvider
     if (cacheControl != null) {
       if (cacheControl.contains('no-store')) {
         // no cache, download now.
-        return await _rw(checkResp, chunkEvents, null);
+        return await _nrw(uri, rawFile, null, chunkEvents: chunkEvents);
       } else {
         String maxAgeKey = 'max-age';
         if (cacheControl.contains(maxAgeKey)) {
@@ -310,52 +315,76 @@ class ExtendedNetworkImageProvider
         checkResp.headers.value(HttpHeaders.acceptRangesHeader) == 'bytes' &&
             checkResp.contentLength > 0;
     final File tempFile = _childFile(parentDir, '$rawFileKey.temp');
-    Uint8List? bytes;
     // if not expired && is support breakpoint transmission && temp file exists
     if (!isExpired && breakpointTransmission && tempFile.existsSync()) {
       final int length = await tempFile.length();
-      final HttpClientResponse? resp =
-          await _retryRequest(uri, callRequest: (HttpClientRequest req) {
-        req.headers.add(HttpHeaders.rangeHeader, 'bytes=$length-');
-        final String? flag = checkResp.headers.value(HttpHeaders.etagHeader) ??
-            checkResp.headers.value(HttpHeaders.lastModifiedHeader);
-        if (flag != null) {
-          req.headers.add(HttpHeaders.ifRangeHeader, flag);
-        }
-      });
+      final HttpClientResponse? resp = await _retryRequest(
+        uri,
+        beforeRequest: (HttpClientRequest req) {
+          req.headers.add(HttpHeaders.rangeHeader, 'bytes=$length-');
+          final String? flag =
+              checkResp.headers.value(HttpHeaders.etagHeader) ??
+                  checkResp.headers.value(HttpHeaders.lastModifiedHeader);
+          if (flag != null) {
+            req.headers.add(HttpHeaders.ifRangeHeader, flag);
+          }
+        },
+      );
       if (resp == null) {
         return null;
       }
       if (resp.statusCode == HttpStatus.partialContent) {
         // is ok, continue download.
-        bytes = await _rw(
+        return await _rw(
           resp,
-          chunkEvents,
+          rawFile,
           tempFile,
-          loaded: length,
+          chunkEvents: chunkEvents,
+          loadedLength: length,
           fileMode: FileMode.append,
         );
       } else if (resp.statusCode == HttpStatus.requestedRangeNotSatisfiable) {
         // 416 Requested Range Not Satisfiable
-        bytes = await _rw(checkResp, chunkEvents, tempFile);
+        return await _nrw(
+          uri,
+          rawFile,
+          tempFile,
+          chunkEvents: chunkEvents,
+        );
       } else if (resp.statusCode == HttpStatus.ok) {
-        bytes = await _rw(resp, chunkEvents, tempFile);
+        return await _rw(resp, rawFile, tempFile, chunkEvents: chunkEvents);
       } else {
         // request error.
         return null;
       }
     } else {
-      bytes = await _rw(checkResp, chunkEvents, tempFile);
+      return await _nrw(
+        uri,
+        rawFile,
+        tempFile,
+        chunkEvents: chunkEvents,
+      );
     }
-    await tempFile.rename(rawFile.path);
-    return bytes;
+  }
+
+  Future<Uint8List?> _nrw(
+    Uri uri,
+    File rawFile,
+    File? tempFile, {
+    StreamController<ImageChunkEvent>? chunkEvents,
+  }) async {
+    final HttpClientResponse? resp = await _retryRequest(uri);
+    return resp == null
+        ? null
+        : await _rw(resp, rawFile, tempFile, chunkEvents: chunkEvents);
   }
 
   Future<Uint8List> _rw(
     HttpClientResponse response,
+    File rawFile,
+    File? tempFile, {
     StreamController<ImageChunkEvent>? chunkEvents,
-    File? file, {
-    int loaded = 0,
+    int loadedLength = 0,
     FileMode fileMode = FileMode.write,
   }) async {
     final Uint8List bytes = await consolidateHttpClientResponseBytes(
@@ -363,25 +392,30 @@ class ExtendedNetworkImageProvider
       onBytesReceived: chunkEvents != null
           ? (int cumulative, int? total) {
               chunkEvents.add(ImageChunkEvent(
-                cumulativeBytesLoaded: cumulative + loaded,
-                expectedTotalBytes: total == null ? null : total + loaded,
+                cumulativeBytesLoaded: cumulative + loadedLength,
+                expectedTotalBytes: total == null ? null : total + loadedLength,
               ));
             }
           : null,
     );
-    await file?.writeAsBytes(bytes, mode: fileMode);
+    if (tempFile != null) {
+      await tempFile.writeAsBytes(bytes, mode: fileMode);
+      await tempFile.rename(rawFile.path);
+    }
     return bytes;
   }
 
   Future<HttpClientResponse> _createNewRequest(
     Uri uri, {
-    _CallRequest? callRequest,
+    bool withBody = true,
+    _BeforeRequest? beforeRequest,
   }) async {
-    final HttpClientRequest request = await httpClient.getUrl(uri);
+    final HttpClientRequest request =
+        await (withBody ? httpClient.getUrl(uri) : httpClient.headUrl(uri));
     headers?.forEach((String key, Object value) {
       request.headers.add(key, value);
     });
-    callRequest?.call(request);
+    beforeRequest?.call(request);
     final HttpClientResponse response = await request.close();
     if (timeLimit != null) {
       response.timeout(
@@ -393,14 +427,19 @@ class ExtendedNetworkImageProvider
 
   Future<HttpClientResponse?> _retryRequest(
     Uri uri, {
-    _CallRequest? callRequest,
+    bool withBody = true,
+    _BeforeRequest? beforeRequest,
   }) async {
     cancelToken?.throwIfCancellationRequested();
     return await RetryHelper.tryRun<HttpClientResponse>(
       () {
         return CancellationTokenSource.register(
           cancelToken,
-          _createNewRequest(uri, callRequest: callRequest),
+          _createNewRequest(
+            uri,
+            withBody: withBody,
+            beforeRequest: beforeRequest,
+          ),
         );
       },
       cancelToken: cancelToken,
@@ -428,4 +467,4 @@ class ExtendedNetworkImageProvider
   }
 }
 
-typedef _CallRequest = void Function(HttpClientRequest request);
+typedef _BeforeRequest = void Function(HttpClientRequest request);
