@@ -265,7 +265,7 @@ class ExtendedNetworkImageProvider
   Future<HttpClientResponse> _getResponse(Uri resolved) async {
     final HttpClientRequest request = await httpClient.getUrl(resolved);
     headers?.forEach((String name, String value) {
-      request.headers.add(name, value);
+      request.headers.set(name, value);
     });
     final HttpClientResponse response = await request.close();
     if (timeLimit != null) {
