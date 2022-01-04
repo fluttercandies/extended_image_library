@@ -1,3 +1,7 @@
+## 3.1.1
+
+* Fix socket leak (#38)
+
 ## 3.1.0
 
 * Improve:
