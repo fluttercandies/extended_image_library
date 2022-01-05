@@ -227,6 +227,12 @@ class ExtendedNetworkImageProvider
       final Uri resolved = Uri.base.resolve(key.url);
       final HttpClientResponse? response = await _tryGetResponse(resolved);
       if (response == null || response.statusCode != HttpStatus.ok) {
+        if (response != null) {
+          // The network may be only temporarily unavailable, or the file will be
+          // added on the server later. Avoid having future calls to resolve
+          // fail to check the network again.
+          await response.drain<List<int>>(<int>[]);
+        }
         return null;
       }
 
