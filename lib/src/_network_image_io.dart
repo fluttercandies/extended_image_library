@@ -314,7 +314,7 @@ class ExtendedNetworkImageProvider
         timeRetry == other.timeRetry &&
         cache == other.cache &&
         cacheKey == other.cacheKey &&
-        headers == other.headers &&
+        //headers == other.headers &&
         retries == other.retries &&
         imageCacheName == other.imageCacheName &&
         cacheMaxAge == other.cacheMaxAge;
@@ -330,7 +330,7 @@ class ExtendedNetworkImageProvider
         timeRetry,
         cache,
         cacheKey,
-        headers,
+        //headers,
         retries,
         imageCacheName,
         cacheMaxAge,

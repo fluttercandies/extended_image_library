@@ -142,7 +142,7 @@ class ExtendedNetworkImageProvider
     return other is ExtendedNetworkImageProvider &&
         url == other.url &&
         scale == other.scale &&
-        cacheRawData == other.cacheRawData &&
+        //cacheRawData == other.cacheRawData &&
         imageCacheName == other.imageCacheName;
   }
 
@@ -150,12 +150,12 @@ class ExtendedNetworkImageProvider
   int get hashCode => ui.hashValues(
         url,
         scale,
-        cacheRawData,
+        //cacheRawData,
         imageCacheName,
       );
 
   @override
-  String toString() => '$runtimeType("$url", scale: $scale, cacheRawData)';
+  String toString() => '$runtimeType("$url", scale: $scale)';
 
   // not support on web
   @override
