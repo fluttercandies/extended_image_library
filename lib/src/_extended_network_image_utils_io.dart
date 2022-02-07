@@ -14,7 +14,7 @@ Future<bool> clearDiskCachedImages({Duration? duration}) async {
         cacheImagesDirectory.deleteSync(recursive: true);
       } else {
         final DateTime now = DateTime.now();
-        for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
+        await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
           final FileStat fs = file.statSync();
           if (now.subtract(duration).isAfter(fs.changed)) {
             file.deleteSync(recursive: true);
@@ -49,7 +49,7 @@ Future<File?> getCachedImageFile(String url, {String? cacheKey}) async {
     final Directory cacheImagesDirectory = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
     if (cacheImagesDirectory.existsSync()) {
-      for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
+      await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
         if (file.path.endsWith(key)) {
           return File(file.path);
         }
@@ -68,7 +68,7 @@ Future<bool> cachedImageExists(String url, {String? cacheKey}) async {
     final Directory cacheImagesDirectory = Directory(
         join((await getTemporaryDirectory()).path, cacheImageFolderName));
     if (cacheImagesDirectory.existsSync()) {
-      for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
+      await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
         if (file.path.endsWith(key)) {
           return true;
         }
@@ -86,7 +86,7 @@ Future<int> getCachedSizeBytes() async {
   final Directory cacheImagesDirectory = Directory(
       join((await getTemporaryDirectory()).path, cacheImageFolderName));
   if (cacheImagesDirectory.existsSync()) {
-    for (final FileSystemEntity file in cacheImagesDirectory.listSync()) {
+    await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
       size += file.statSync().size;
     }
   }
