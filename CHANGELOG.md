@@ -1,3 +1,7 @@
+## 3.1.3
+
+* Make abstract ExtendedNetworkImageProvider with ExtendedImageProvider
+
 ## 3.1.2
 
 * Fix issue that using headers might cause a lot of rebuilds (#39)

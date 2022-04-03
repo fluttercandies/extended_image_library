@@ -4,9 +4,11 @@ import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import '_network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
     as network_image;
+import 'extended_image_provider.dart';
 
 abstract class ExtendedNetworkImageProvider
-    extends ImageProvider<ExtendedNetworkImageProvider> {
+    extends ImageProvider<ExtendedNetworkImageProvider>
+    with ExtendedImageProvider<ExtendedNetworkImageProvider> {
   /// Creates an object that fetches the image at the given URL.
   ///
   /// The arguments [url] and [scale] must not be null.
@@ -25,17 +27,6 @@ abstract class ExtendedNetworkImageProvider
     String? imageCacheName,
     Duration? cacheMaxAge,
   }) = network_image.ExtendedNetworkImageProvider;
-
-  /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
-
-  String? get imageCacheName;
-
-  /// Whether cache raw data if you need to get raw data directly.
-  /// For example, we need raw image data to edit,
-  /// but [ui.Image.toByteData()] is very slow. So we cache the image
-  /// data here.
-  ///
-  bool get cacheRawData;
 
   /// Time Limit to request image
   Duration? get timeLimit;
