@@ -1,3 +1,7 @@
+## 3.1.4
+
+* Use list instead of listSync to look for cached files
+
 ## 3.1.3
 
 * Make abstract ExtendedNetworkImageProvider with ExtendedImageProvider
