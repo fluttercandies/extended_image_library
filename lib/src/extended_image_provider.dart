@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
+import 'package:extended_image_library/src/extended_resize_image_provider.dart';
 import 'package:flutter/painting.dart' hide imageCache;
 
 /// The cached raw image data
@@ -25,7 +26,8 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     if (imageCacheName != null) {
       return imageCaches.putIfAbsent(imageCacheName!, () => ImageCache());
     } else {
-      return PaintingBinding.instance.imageCache;
+      // ignore: unnecessary_non_null_assertion
+      return PaintingBinding.instance!.imageCache!;
     }
   }
 
@@ -34,11 +36,16 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     assert(cacheRawData,
         'you should set [ExtendedImageProvider.cacheRawData] to true, if you want to get rawImageData from provider.');
 
+    ImageProvider<Object> provider = this;
+    if (this is ExtendedResizeImage) {
+      provider = (this as ExtendedResizeImage).imageProvider;
+    }
+
     assert(
-      rawImageDataMap.containsKey(this),
+      rawImageDataMap.containsKey(provider),
       'raw image data is not already now!',
     );
-    final Uint8List raw = rawImageDataMap[this]!;
+    final Uint8List raw = rawImageDataMap[provider]!;
 
     return raw;
   }
@@ -94,7 +101,8 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      () => load(key, PaintingBinding.instance.instantiateImageCodec),
+      // ignore: unnecessary_non_null_assertion
+      () => load(key, PaintingBinding.instance!.instantiateImageCodec),
       onError: handleError,
     );
     if (completer != null) {

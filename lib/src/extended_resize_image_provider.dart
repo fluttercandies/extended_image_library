@@ -20,7 +20,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   const ExtendedResizeImage(
     this.imageProvider, {
     this.compressionRatio,
-    this.maxBytes = 500 << 10,
+    this.maxBytes = 50 << 10,
     this.width,
     this.height,
     this.allowUpscaling = false,
@@ -37,7 +37,8 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   final ImageProvider imageProvider;
 
   /// [ExtendedResizeImage] will compress the image to a size
-  /// that is smaller than [maxBytes]. The default size is 500KB.
+  /// that is smaller than [maxBytes]. The default size is 50KB.
+  /// It's actual bytes of Image, not decode bytes
   final int? maxBytes;
 
   /// The image`s size will resize to original * [compressionRatio].
@@ -190,19 +191,23 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }) async {
     final ImmutableBuffer buffer = await ImmutableBuffer.fromUint8List(list);
     final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
+    final int totalBytes =
+        descriptor.width * descriptor.height * descriptor.bytesPerPixel;
     if (compressionRatio != null) {
       final _IntSize size = _resize(
         descriptor.width,
         descriptor.height,
-        (descriptor.width * descriptor.height * 4 * compressionRatio).toInt(),
+        (totalBytes * compressionRatio).toInt(),
+        descriptor.bytesPerPixel,
       );
       targetWidth = size.width;
       targetHeight = size.height;
-    } else if (maxBytes != null) {
+    } else if (maxBytes != null && maxBytes < list.length) {
       final _IntSize size = _resize(
         descriptor.width,
         descriptor.height,
-        maxBytes,
+        totalBytes * maxBytes ~/ list.length,
+        descriptor.bytesPerPixel,
       );
       targetWidth = size.width;
       targetHeight = size.height;
@@ -225,9 +230,9 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// [height] The image's original height.
   /// [maxBytes] The size that image will resize to.
   ///
-  _IntSize _resize(int width, int height, int maxBytes) {
+  _IntSize _resize(int width, int height, int maxBytes, int bytesPerPixel) {
     final double ratio = width / height;
-    final int maxSize_1_4 = maxBytes >> 2;
+    final int maxSize_1_4 = maxBytes ~/ bytesPerPixel;
     final int targetHeight = sqrt(maxSize_1_4 / ratio).floor();
     final int targetWidth = (ratio * targetHeight).floor();
     return _IntSize(targetWidth, targetHeight);
