@@ -232,6 +232,34 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     final int targetWidth = (ratio * targetHeight).floor();
     return _IntSize(targetWidth, targetHeight);
   }
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is ExtendedResizeImage &&
+        imageProvider == other.imageProvider &&
+        compressionRatio == other.compressionRatio &&
+        maxBytes == other.maxBytes &&
+        width == other.width &&
+        height == other.height &&
+        allowUpscaling == other.allowUpscaling &&
+        cacheRawData == other.cacheRawData &&
+        imageCacheName == other.imageCacheName;
+  }
+
+  @override
+  int get hashCode => hashValues(
+        imageProvider,
+        compressionRatio,
+        maxBytes,
+        width,
+        height,
+        allowUpscaling,
+        cacheRawData,
+        imageCacheName,
+      );
 }
 
 @immutable
