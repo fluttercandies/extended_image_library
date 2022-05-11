@@ -21,10 +21,9 @@ void clearMemoryImageCache([String? name]) {
       imageCaches.remove(name);
     }
   } else {
-    // ignore: invalid_null_aware_operator
-    PaintingBinding.instance?.imageCache?.clear();
-    // ignore: invalid_null_aware_operator
-    PaintingBinding.instance?.imageCache?.clearLiveImages();
+    PaintingBinding.instance.imageCache.clear();
+
+    PaintingBinding.instance.imageCache.clearLiveImages();
   }
 }
 
@@ -37,8 +36,7 @@ ImageCache? getMemoryImageCache([String? name]) {
       return null;
     }
   } else {
-    // ignore: invalid_null_aware_operator
-    return PaintingBinding.instance?.imageCache;
+    return PaintingBinding.instance.imageCache;
   }
 }
 

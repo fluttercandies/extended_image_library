@@ -26,8 +26,7 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     if (imageCacheName != null) {
       return imageCaches.putIfAbsent(imageCacheName!, () => ImageCache());
     } else {
-      // ignore: unnecessary_non_null_assertion
-      return PaintingBinding.instance!.imageCache!;
+      return PaintingBinding.instance.imageCache;
     }
   }
 
@@ -101,8 +100,7 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      // ignore: unnecessary_non_null_assertion
-      () => load(key, PaintingBinding.instance!.instantiateImageCodec),
+      () => load(key, PaintingBinding.instance.instantiateImageCodec),
       onError: handleError,
     );
     if (completer != null) {
