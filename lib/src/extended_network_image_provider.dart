@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
+
 import '_network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
     as network_image;
 import 'extended_image_provider.dart';
@@ -58,7 +60,7 @@ abstract class ExtendedNetworkImageProvider
   /// print error
   bool get printError;
 
-  /// The max duration to cahce image.
+  /// The max duration to cache image.
   /// After this time the cache is expired and the image is reloaded.
   Duration? get cacheMaxAge;
 
@@ -70,6 +72,11 @@ abstract class ExtendedNetworkImageProvider
   Future<Uint8List?> getNetworkImageData({
     StreamController<ImageChunkEvent>? chunkEvents,
   });
+
+  @override
+  Future<bool> evict(
+      {ImageCache? cache,
+      ImageConfiguration configuration = ImageConfiguration.empty});
 
   ///HttpClient for network, it's null on web
   static dynamic get httpClient =>
