@@ -25,16 +25,16 @@ class ExtendedMemoryImageProvider extends MemoryImage
 
   @override
   Uint8List get rawImageData => bytes;
-
   @override
-  ImageStreamCompleter load(MemoryImage key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(
+      MemoryImage key, DecoderBufferCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
     );
   }
 
-  Future<ui.Codec> _loadAsync(MemoryImage key, DecoderCallback decode) {
+  Future<ui.Codec> _loadAsync(MemoryImage key, DecoderBufferCallback decode) {
     assert(key == this);
     return instantiateImageCodec(bytes, decode);
   }
@@ -52,7 +52,7 @@ class ExtendedMemoryImageProvider extends MemoryImage
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
         bytes.hashCode,
         scale,
         cacheRawData,

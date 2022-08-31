@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' hide FileImage;
@@ -25,18 +24,21 @@ class ExtendedFileImageProvider extends FileImage
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
   @override
   final String? imageCacheName;
+
   @override
-  ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(FileImage key, DecoderBufferCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
-      informationCollector: () sync* {
-        yield ErrorDescription('Path: ${file.path}');
-      },
+      debugLabel: key.file.path,
+      informationCollector: () => <DiagnosticsNode>[
+        ErrorDescription('Path: ${file.path}'),
+      ],
     );
   }
 
-  Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
+  Future<ui.Codec> _loadAsync(
+      FileImage key, DecoderBufferCallback decode) async {
     assert(key == this);
 
     final Uint8List bytes = await file.readAsBytes();
@@ -63,10 +65,14 @@ class ExtendedFileImageProvider extends FileImage
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
         file.path,
         scale,
         cacheRawData,
         imageCacheName,
       );
+
+  @override
+  String toString() =>
+      '${objectRuntimeType(this, 'FileImage')}("${file.path}", scale: $scale)';
 }

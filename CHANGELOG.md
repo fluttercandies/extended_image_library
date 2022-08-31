@@ -1,3 +1,7 @@
+## 3.4.0
+
+* Migrate to 3.3.0 (load=>loadBuffer)
+
 ## 3.3.0
 
 * Migrate to 3.0.0

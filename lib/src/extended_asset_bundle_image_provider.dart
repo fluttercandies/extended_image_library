@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -46,7 +45,8 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   }
 
   @override
-  ImageStreamCompleter load(AssetBundleImageKey key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(
+      AssetBundleImageKey key, DecoderBufferCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -63,7 +63,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderCallback decode) async {
+      AssetBundleImageKey key, DecoderBufferCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -117,7 +117,8 @@ class ExtendedAssetImageProvider extends AssetImage
   }
 
   @override
-  ImageStreamCompleter load(AssetBundleImageKey key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(
+      AssetBundleImageKey key, DecoderBufferCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -134,7 +135,7 @@ class ExtendedAssetImageProvider extends AssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderCallback decode) async {
+      AssetBundleImageKey key, DecoderBufferCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -144,6 +145,7 @@ class ExtendedAssetImageProvider extends AssetImage
       this.imageCache.evict(key);
       rethrow;
     }
+
     final Uint8List result = data.buffer.asUint8List();
     return await instantiateImageCodec(result, decode);
   }
@@ -182,7 +184,7 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
         bundle,
         name,
         scale,

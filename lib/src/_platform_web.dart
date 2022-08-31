@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -48,7 +47,7 @@ class FileImage extends ImageProvider<FileImage> {
   }
 
   @override
-  ImageStreamCompleter load(FileImage key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(FileImage key, DecoderBufferCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -59,7 +58,8 @@ class FileImage extends ImageProvider<FileImage> {
     );
   }
 
-  Future<ui.Codec> _loadAsync(FileImage key, DecoderCallback decode) async {
+  Future<ui.Codec> _loadAsync(
+      FileImage key, DecoderBufferCallback decode) async {
     return Future<ui.Codec>.error(StateError('not support on web'));
   }
 
@@ -74,7 +74,7 @@ class FileImage extends ImageProvider<FileImage> {
   }
 
   @override
-  int get hashCode => hashValues(file.path, scale);
+  int get hashCode => Object.hash(file.path, scale);
 
   @override
   String toString() =>

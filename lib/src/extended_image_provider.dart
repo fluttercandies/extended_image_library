@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'dart:ui' as ui show Codec;
+import 'dart:ui' as ui show Codec, ImmutableBuffer;
 import 'package:extended_image_library/src/extended_resize_image_provider.dart';
 import 'package:flutter/painting.dart' hide imageCache;
 
@@ -53,13 +53,14 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   /// for example, compress
   Future<ui.Codec> instantiateImageCodec(
     Uint8List data,
-    DecoderCallback decode,
+    DecoderBufferCallback decode,
   ) async {
     if (cacheRawData) {
       rawImageDataMap[this] = data;
     }
-
-    return await decode(data);
+    final ui.ImmutableBuffer buffer =
+        await ui.ImmutableBuffer.fromUint8List(data);
+    return await decode(buffer);
   }
 
   /// Called by [resolve] with the key returned by [obtainKey].
@@ -100,7 +101,8 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      () => load(key, PaintingBinding.instance.instantiateImageCodec),
+      () => loadBuffer(
+          key, PaintingBinding.instance.instantiateImageCodecFromBuffer),
       onError: handleError,
     );
     if (completer != null) {
