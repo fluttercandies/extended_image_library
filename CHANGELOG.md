@@ -1,3 +1,7 @@
+## 3.4.1
+
+* clearMemoryCacheWhenDispose is not working with imageCacheName property, obtainCacheStatus method should be overrided.(#44)
+
 ## 3.4.0
 
 * Migrate to 3.3.0 (load=>loadBuffer)
