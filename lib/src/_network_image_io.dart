@@ -194,9 +194,11 @@ class ExtendedNetworkImageProvider
             cacheFlie.deleteSync(recursive: true);
           } else {
             data = await cacheFlie.readAsBytes();
+            cacheFlie.setLastAccessed(DateTime.now());
           }
         } else {
           data = await cacheFlie.readAsBytes();
+          cacheFlie.setLastAccessed(DateTime.now());
         }
       }
     }

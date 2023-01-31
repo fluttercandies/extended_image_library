@@ -1,3 +1,7 @@
+## 3.4.2
+
+* loadCache image set last accessed datetime(used to clear cache)
+
 ## 3.4.1
 
 * clearMemoryCacheWhenDispose is not working with imageCacheName property, obtainCacheStatus method should be overrided.(#44)
