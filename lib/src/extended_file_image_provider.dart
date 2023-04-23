@@ -1,6 +1,8 @@
 import 'dart:ui' as ui show Codec;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' hide FileImage;
+
 import 'extended_image_provider.dart';
 import 'platform.dart';
 

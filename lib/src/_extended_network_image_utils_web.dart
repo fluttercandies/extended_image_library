@@ -1,5 +1,5 @@
 import 'dart:async';
-import '_platform_web.dart';
+import 'dart:io';
 
 /// clear the disk cache directory then return if it succeed.
 ///  <param name="duration">timespan to compute whether file has expired or not</param>
