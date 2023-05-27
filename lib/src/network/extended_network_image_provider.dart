@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:extended_image_library/src/extended_image_provider.dart';
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import 'network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
-    as network_image;
+import 'network_image_io.dart'
+    if (dart.library.js_util) 'network_image_web.dart' as network_image;
 
 /// [NetworkImage]
 abstract class ExtendedNetworkImageProvider

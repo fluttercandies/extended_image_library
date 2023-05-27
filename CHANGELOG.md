@@ -1,3 +1,7 @@
+## 3.5.1
+
+* Fix miss _network_image_web.dart #582
+
 ## 3.5.0
 
 * Breaking Change: remove loadBuffer method, and add loadImage method [https://github.com/flutter/flutter/pull/118966]
