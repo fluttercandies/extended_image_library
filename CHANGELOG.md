@@ -1,3 +1,8 @@
+## 3.5.0
+
+* Breaking Change: remove loadBuffer method, and add loadImage method [https://github.com/flutter/flutter/pull/118966]
+* Migrate to 3.7.0
+
 ## 3.4.2
 
 * Fix issue that cannot compile ExtendedImage.file on the web (566#)

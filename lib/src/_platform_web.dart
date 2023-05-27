@@ -1,4 +1,3 @@
-import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -44,23 +43,6 @@ class FileImage extends ImageProvider<FileImage> {
   @override
   Future<FileImage> obtainKey(ImageConfiguration configuration) {
     return SynchronousFuture<FileImage>(this);
-  }
-
-  @override
-  ImageStreamCompleter loadBuffer(FileImage key, DecoderBufferCallback decode) {
-    return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
-      scale: key.scale,
-      debugLabel: key.file.path,
-      informationCollector: () sync* {
-        yield ErrorDescription('Path: ${file.path}');
-      },
-    );
-  }
-
-  Future<ui.Codec> _loadAsync(
-      FileImage key, DecoderBufferCallback decode) async {
-    return Future<ui.Codec>.error(StateError('not support on web'));
   }
 
   @override

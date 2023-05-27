@@ -45,8 +45,8 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
-      AssetBundleImageKey key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(
+      AssetBundleImageKey key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -63,7 +63,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderBufferCallback decode) async {
+      AssetBundleImageKey key, ImageDecoderCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -117,8 +117,8 @@ class ExtendedAssetImageProvider extends AssetImage
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
-      AssetBundleImageKey key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(
+      AssetBundleImageKey key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -135,7 +135,7 @@ class ExtendedAssetImageProvider extends AssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderBufferCallback decode) async {
+      AssetBundleImageKey key, ImageDecoderCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.

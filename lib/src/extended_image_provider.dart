@@ -56,7 +56,7 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   /// for example, compress
   Future<ui.Codec> instantiateImageCodec(
     Uint8List data,
-    DecoderBufferCallback decode,
+    ImageDecoderCallback decode,
   ) async {
     if (cacheRawData) {
       rawImageDataMap[this] = data;
@@ -104,8 +104,10 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      () => loadBuffer(
-          key, PaintingBinding.instance.instantiateImageCodecFromBuffer),
+      () => loadImage(
+        key,
+        PaintingBinding.instance.instantiateImageCodecWithSize,
+      ),
       onError: handleError,
     );
     if (completer != null) {

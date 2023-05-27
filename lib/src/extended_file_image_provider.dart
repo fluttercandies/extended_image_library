@@ -26,7 +26,7 @@ class ExtendedFileImageProvider extends FileImage
   final String? imageCacheName;
 
   @override
-  ImageStreamCompleter loadBuffer(FileImage key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(FileImage key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -38,7 +38,7 @@ class ExtendedFileImageProvider extends FileImage
   }
 
   Future<ui.Codec> _loadAsync(
-      FileImage key, DecoderBufferCallback decode) async {
+      FileImage key, ImageDecoderCallback decode) async {
     assert(key == this);
 
     final Uint8List bytes = await file.readAsBytes();

@@ -25,6 +25,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.allowUpscaling = false,
     this.cacheRawData = false,
     this.imageCacheName,
+    this.policy = ResizeImagePolicy.exact,
   }) : assert((compressionRatio != null &&
                 compressionRatio > 0 &&
                 compressionRatio < 1) ||
@@ -51,6 +52,11 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   /// The height the image should decode to and cache.
   final int? height;
+
+  /// The policy that determines how [width] and [height] are interpreted.
+  ///
+  /// Defaults to [ResizeImagePolicy.exact].
+  final ResizeImagePolicy policy;
 
   /// Whether the [width] and [height] parameters should be clamped to the
   /// intrinsic width and height of the image.
@@ -108,17 +114,21 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
-      _SizeAwareCacheKey key, DecoderBufferCallback decode) {
-    Future<Codec> decodeResize(ImmutableBuffer buffer,
-        {int? cacheWidth, int? cacheHeight, bool? allowUpscaling}) {
+  ImageStreamCompleter loadImage(
+      _SizeAwareCacheKey key, ImageDecoderCallback decode) {
+    Future<Codec> decodeResize(
+      ImmutableBuffer buffer, {
+      TargetImageSizeCallback? getTargetSize,
+    }) {
       assert(
-        cacheWidth == null && cacheHeight == null && allowUpscaling == null,
+        getTargetSize == null,
         'ResizeImage cannot be composed with another ImageProvider that applies '
         'cacheWidth, cacheHeight, or allowUpscaling.',
       );
+
       return _instantiateImageCodec(
         buffer,
+        decode,
         compressionRatio: compressionRatio,
         maxBytes: maxBytes,
         targetWidth: width,
@@ -127,7 +137,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     }
 
     final ImageStreamCompleter completer =
-        imageProvider.loadBuffer(key._providerCacheKey, decodeResize);
+        imageProvider.loadImage(key._providerCacheKey, decodeResize);
     if (!kReleaseMode) {
       completer.debugLabel =
           '${completer.debugLabel} - Resized(${key._width}×${key._height})';
@@ -178,7 +188,8 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   Future<Codec> _instantiateImageCodec(
-    ImmutableBuffer buffer, {
+    ImmutableBuffer buffer,
+    ImageDecoderCallback decode, {
     double? compressionRatio,
     int? maxBytes,
     int? targetWidth,
@@ -205,14 +216,71 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       );
       targetWidth = size.width;
       targetHeight = size.height;
-    } else if (!allowUpscaling) {
-      if (targetWidth != null && targetWidth > descriptor.width) {
-        targetWidth = descriptor.width;
-      }
-      if (targetHeight != null && targetHeight > descriptor.height) {
-        targetHeight = descriptor.height;
-      }
     }
+    // else if (!allowUpscaling) {
+    //   if (targetWidth != null && targetWidth > descriptor.width) {
+    //     targetWidth = descriptor.width;
+    //   }
+    //   if (targetHeight != null && targetHeight > descriptor.height) {
+    //     targetHeight = descriptor.height;
+    //   }
+    // }
+    else {
+      return decode(buffer,
+          getTargetSize: (int intrinsicWidth, int intrinsicHeight) {
+        switch (policy) {
+          case ResizeImagePolicy.exact:
+            int? targetWidth = width;
+            int? targetHeight = height;
+
+            if (!allowUpscaling) {
+              if (targetWidth != null && targetWidth > intrinsicWidth) {
+                targetWidth = intrinsicWidth;
+              }
+              if (targetHeight != null && targetHeight > intrinsicHeight) {
+                targetHeight = intrinsicHeight;
+              }
+            }
+
+            return TargetImageSize(width: targetWidth, height: targetHeight);
+          case ResizeImagePolicy.fit:
+            final double aspectRatio = intrinsicWidth / intrinsicHeight;
+            final int maxWidth = width ?? intrinsicWidth;
+            final int maxHeight = height ?? intrinsicHeight;
+            int targetWidth = intrinsicWidth;
+            int targetHeight = intrinsicHeight;
+
+            if (targetWidth > maxWidth) {
+              targetWidth = maxWidth;
+              targetHeight = targetWidth ~/ aspectRatio;
+            }
+
+            if (targetHeight > maxHeight) {
+              targetHeight = maxHeight;
+              targetWidth = (targetHeight * aspectRatio).floor();
+            }
+
+            if (allowUpscaling) {
+              if (width == null) {
+                assert(height != null);
+                targetHeight = height!;
+                targetWidth = (targetHeight * aspectRatio).floor();
+              } else if (height == null) {
+                targetWidth = width!;
+                targetHeight = targetWidth ~/ aspectRatio;
+              } else {
+                final int derivedMaxWidth = (maxHeight * aspectRatio).floor();
+                final int derivedMaxHeight = maxWidth ~/ aspectRatio;
+                targetWidth = min(maxWidth, derivedMaxWidth);
+                targetHeight = min(maxHeight, derivedMaxHeight);
+              }
+            }
+
+            return TargetImageSize(width: targetWidth, height: targetHeight);
+        }
+      });
+    }
+
     return descriptor.instantiateCodec(
       targetWidth: targetWidth,
       targetHeight: targetHeight,
