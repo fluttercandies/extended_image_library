@@ -1,6 +1,6 @@
 ## 3.5.2
 
-* Fix issue that can't load image if cacheWidth or cacheHeight set on web platform #587
+* Fix issue that can't load image if cacheWidth or cacheHeight set on web platform #56
 * Mark [ExtendedResizeImage.compressionRatio] and [ExtendedResizeImage.maxBytes] are not supported on web. (Error: Unsupported operation: ImageDescriptor is not supported on web.)
 
 ## 3.5.1
