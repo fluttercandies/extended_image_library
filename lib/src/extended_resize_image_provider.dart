@@ -28,8 +28,9 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.policy = ResizeImagePolicy.exact,
   }) : assert((compressionRatio != null &&
                 compressionRatio > 0 &&
-                compressionRatio < 1) ||
-            (maxBytes != null && maxBytes > 0) ||
+                compressionRatio < 1 &&
+                !kIsWeb) ||
+            (maxBytes != null && maxBytes > 0 && !kIsWeb) ||
             width != null ||
             height != null);
 
@@ -39,12 +40,14 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   /// [ExtendedResizeImage] will compress the image to a size
   /// that is smaller than [maxBytes]. The default size is 50KB.
   /// It's actual bytes of Image, not decode bytes
+  /// it's not supported on web
   final int? maxBytes;
 
   /// The image`s size will resize to original * [compressionRatio].
   /// It's ExtendedResizeImage`s first pick.
   /// The compressionRatio`s range is from 0.0 (exclusive), to
   /// 1.0 (exclusive).
+  /// it's not supported on web
   final double? compressionRatio;
 
   /// The width the image should decode to and cache.
@@ -195,37 +198,37 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     int? targetWidth,
     int? targetHeight,
   }) async {
-    final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
-    final int totalBytes =
-        descriptor.width * descriptor.height * descriptor.bytesPerPixel;
-    if (compressionRatio != null) {
-      final _IntSize size = _resize(
-        descriptor.width,
-        descriptor.height,
-        (totalBytes * compressionRatio).toInt(),
-        descriptor.bytesPerPixel,
+    if (!kIsWeb &&
+        (compressionRatio != null ||
+            (maxBytes != null && maxBytes < buffer.length))) {
+      final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
+      final int totalBytes =
+          descriptor.width * descriptor.height * descriptor.bytesPerPixel;
+      if (compressionRatio != null) {
+        final _IntSize size = _resize(
+          descriptor.width,
+          descriptor.height,
+          (totalBytes * compressionRatio).toInt(),
+          descriptor.bytesPerPixel,
+        );
+        targetWidth = size.width;
+        targetHeight = size.height;
+      } else if (maxBytes != null && maxBytes < buffer.length) {
+        final _IntSize size = _resize(
+          descriptor.width,
+          descriptor.height,
+          totalBytes * maxBytes ~/ buffer.length,
+          descriptor.bytesPerPixel,
+        );
+        targetWidth = size.width;
+        targetHeight = size.height;
+      }
+
+      return descriptor.instantiateCodec(
+        targetWidth: targetWidth,
+        targetHeight: targetHeight,
       );
-      targetWidth = size.width;
-      targetHeight = size.height;
-    } else if (maxBytes != null && maxBytes < buffer.length) {
-      final _IntSize size = _resize(
-        descriptor.width,
-        descriptor.height,
-        totalBytes * maxBytes ~/ buffer.length,
-        descriptor.bytesPerPixel,
-      );
-      targetWidth = size.width;
-      targetHeight = size.height;
-    }
-    // else if (!allowUpscaling) {
-    //   if (targetWidth != null && targetWidth > descriptor.width) {
-    //     targetWidth = descriptor.width;
-    //   }
-    //   if (targetHeight != null && targetHeight > descriptor.height) {
-    //     targetHeight = descriptor.height;
-    //   }
-    // }
-    else {
+    } else {
       return decode(buffer,
           getTargetSize: (int intrinsicWidth, int intrinsicHeight) {
         switch (policy) {
@@ -280,11 +283,6 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         }
       });
     }
-
-    return descriptor.instantiateCodec(
-      targetWidth: targetWidth,
-      targetHeight: targetHeight,
-    );
   }
 
   /// Calculate fittest size.
