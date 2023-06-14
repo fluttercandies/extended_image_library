@@ -1,3 +1,7 @@
+## 3.5.3
+
+* upgrade http to 1.0.0
+
 ## 3.5.2
 
 * Fix issue that can't load image if cacheWidth or cacheHeight set on web platform #56
