@@ -1,3 +1,7 @@
+## 3.6.0
+
+* Migrate to 3.13.0
+
 ## 3.5.3
 
 * upgrade http to 1.0.0

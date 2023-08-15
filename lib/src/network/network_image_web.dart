@@ -5,7 +5,7 @@
 // ignore_for_file: implementation_imports
 
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:js_interop';
 import 'dart:ui' as ui;
 
 import 'package:extended_image_library/src/extended_image_provider.dart';
@@ -13,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/src/services/dom.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import 'package:js/js.dart';
 
 import 'extended_network_image_provider.dart' as image_provider;
 
@@ -22,7 +21,7 @@ typedef HttpRequestFactory = DomXMLHttpRequest Function();
 
 /// Default HTTP client.
 DomXMLHttpRequest _httpClient() {
-  return createDomXMLHttpRequest();
+  return DomXMLHttpRequest();
 }
 
 /// Creates an overridable factory function.
@@ -163,7 +162,7 @@ class ExtendedNetworkImageProvider
         });
       }
 
-      request.addEventListener('load', allowInterop((DomEvent e) {
+      request.addEventListener('load', createDomEventListener((DomEvent e) {
         final int? status = request.status;
         final bool accepted = status! >= 200 && status < 300;
         final bool fileUri = status == 0; // file:// URIs have status of 0.
@@ -181,13 +180,15 @@ class ExtendedNetworkImageProvider
         }
       }));
 
-      request.addEventListener('error', allowInterop(completer.completeError));
+      request.addEventListener(
+          'error', createDomEventListener(completer.completeError));
 
       request.send();
 
       await completer.future;
 
-      final Uint8List bytes = (request.response as ByteBuffer).asUint8List();
+      final Uint8List bytes =
+          (request.response! as JSArrayBuffer).toDart.asUint8List();
 
       if (bytes.lengthInBytes == 0) {
         throw NetworkImageLoadException(
