@@ -1,3 +1,7 @@
+## 4.0.1
+
+* Fix error that it can't find File.length() method at web.
+
 ## 4.0.0
 
 * Migrate to 3.16.0

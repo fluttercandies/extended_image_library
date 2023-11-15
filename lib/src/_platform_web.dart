@@ -22,6 +22,13 @@ class File {
   /// is the contents of the file.
   Future<Uint8List> readAsBytes() async => Uint8List.fromList(<int>[]);
 
+  /// The length of the file.
+  ///
+  /// Returns a `Future<int>` that completes with the length in bytes.
+  Future<int> length() async {
+    return 0;
+  }
+
   /// The path of the file underlying this random access file.
   final String path;
 }
