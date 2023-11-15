@@ -1,4 +1,4 @@
-import 'dart:ui' as ui show Codec;
+import 'dart:ui' as ui show Codec, ImmutableBuffer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' hide FileImage;
 import 'extended_image_provider.dart';
@@ -41,15 +41,28 @@ class ExtendedFileImageProvider extends FileImage
       FileImage key, ImageDecoderCallback decode) async {
     assert(key == this);
 
-    final Uint8List bytes = await file.readAsBytes();
-
-    if (bytes.lengthInBytes == 0) {
+    // TODO(jonahwilliams): making this sync caused test failures that seem to
+    // indicate that we can fail to call evict unless at least one await has
+    // occurred in the test.
+    // https://github.com/flutter/flutter/issues/113044
+    final int lengthInBytes = await file.length();
+    if (lengthInBytes == 0) {
       // The file may become available later.
-      this.imageCache.evict(key);
+      PaintingBinding.instance.imageCache.evict(key);
       throw StateError('$file is empty and cannot be loaded as an image.');
     }
-
-    return await instantiateImageCodec(bytes, decode);
+    // TODO(zmtzawqlp): https://github.com/flutter/flutter/pull/112892
+    // if we use ImmutableBuffer.fromFilePath, we can't cache bytes to edit
+    //
+    if (cacheRawData) {
+      final Uint8List bytes = await file.readAsBytes();
+      return await instantiateImageCodec(bytes, decode);
+    } else {
+      return (file.runtimeType == File)
+          ? decode(await ui.ImmutableBuffer.fromFilePath(file.path))
+          : decode(
+              await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes()));
+    }
   }
 
   @override

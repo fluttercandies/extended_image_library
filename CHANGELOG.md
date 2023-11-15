@@ -1,3 +1,8 @@
+## 3.7.0
+
+* Migrate to 3.16.0
+* [ExtendedFileImageProvider] use ImmutableBuffer.fromFilePath to prevent crash for big image when we don't need to cache raw data.
+
 ## 3.6.0
 
 * Migrate to 3.13.0
