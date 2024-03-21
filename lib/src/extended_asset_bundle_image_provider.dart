@@ -171,7 +171,7 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   final String? imageCacheName;
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) {
       return false;
     }
