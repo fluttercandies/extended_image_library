@@ -1,6 +1,11 @@
+## 4.0.3
+
+* Loosen `web` version to `0.4.0~0.5.x`.
+* Fix lints.
+
 ## 4.0.2
 
-* Upgrade web form 0.3.0 to 0.4.0
+* Upgrade `web` form 0.3.0 to 0.4.0
 
 ## 4.0.1
 
