@@ -1,3 +1,7 @@
+## 4.0.4
+
+* Fix AssetImage flicker(#655)
+
 ## 4.0.3
 
 * Loosen `web` version to `0.4.0~0.5.x`.
