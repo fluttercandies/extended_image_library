@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -109,35 +108,31 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   @override
-  ImageStreamCompleter load(_SizeAwareCacheKey key, DecoderCallback decode) {
-    final DecoderCallback decodeResize = (
-      Uint8List bytes, {
-      int? cacheWidth,
-      int? cacheHeight,
-      bool? allowUpscaling,
-    }) {
+  ImageStreamCompleter loadBuffer(
+      _SizeAwareCacheKey key, DecoderBufferCallback decode) {
+    Future<Codec> decodeResize(ImmutableBuffer buffer,
+        {int? cacheWidth, int? cacheHeight, bool? allowUpscaling}) {
       assert(
         cacheWidth == null && cacheHeight == null && allowUpscaling == null,
         'ResizeImage cannot be composed with another ImageProvider that applies '
         'cacheWidth, cacheHeight, or allowUpscaling.',
       );
       return _instantiateImageCodec(
-        bytes,
+        buffer,
         compressionRatio: compressionRatio,
         maxBytes: maxBytes,
         targetWidth: width,
         targetHeight: height,
       );
-    };
-    final ImageStreamCompleter completer = imageProvider.load(
-      key.providerCacheKey,
-      decodeResize,
-    );
+    }
+
+    final ImageStreamCompleter completer =
+        imageProvider.loadBuffer(key._providerCacheKey, decodeResize);
     if (!kReleaseMode) {
       completer.debugLabel =
-          '${completer.debugLabel} - Resized(compressionRatio:'
-          ' ${key.compressionRatio} maxBytes:${key.maxBytes} size:${key.width}*${key.height})';
+          '${completer.debugLabel} - Resized(${key._width}×${key._height})';
     }
+
     return completer;
   }
 
@@ -183,13 +178,12 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   Future<Codec> _instantiateImageCodec(
-    Uint8List list, {
+    ImmutableBuffer buffer, {
     double? compressionRatio,
     int? maxBytes,
     int? targetWidth,
     int? targetHeight,
   }) async {
-    final ImmutableBuffer buffer = await ImmutableBuffer.fromUint8List(list);
     final ImageDescriptor descriptor = await ImageDescriptor.encoded(buffer);
     final int totalBytes =
         descriptor.width * descriptor.height * descriptor.bytesPerPixel;
@@ -202,11 +196,11 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       );
       targetWidth = size.width;
       targetHeight = size.height;
-    } else if (maxBytes != null && maxBytes < list.length) {
+    } else if (maxBytes != null && maxBytes < buffer.length) {
       final _IntSize size = _resize(
         descriptor.width,
         descriptor.height,
-        totalBytes * maxBytes ~/ list.length,
+        totalBytes * maxBytes ~/ buffer.length,
         descriptor.bytesPerPixel,
       );
       targetWidth = size.width;
@@ -255,7 +249,7 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
         imageProvider,
         compressionRatio,
         maxBytes,
@@ -278,24 +272,24 @@ class _IntSize {
 @immutable
 class _SizeAwareCacheKey {
   const _SizeAwareCacheKey(
-    this.providerCacheKey,
+    this._providerCacheKey,
     this.compressionRatio,
     this.maxBytes,
-    this.width,
-    this.height,
+    this._width,
+    this._height,
     this.cacheRawData,
     this.imageCacheName,
   );
 
-  final Object providerCacheKey;
+  final Object _providerCacheKey;
 
   final int? maxBytes;
 
   final double? compressionRatio;
 
-  final int? width;
+  final int? _width;
 
-  final int? height;
+  final int? _height;
 
   /// Whether cache raw data if you need to get raw data directly.
   /// For example, we need raw image data to edit,
@@ -313,22 +307,22 @@ class _SizeAwareCacheKey {
       return false;
     }
     return other is _SizeAwareCacheKey &&
-        other.providerCacheKey == providerCacheKey &&
+        other._providerCacheKey == _providerCacheKey &&
         other.maxBytes == maxBytes &&
         other.compressionRatio == compressionRatio &&
-        other.width == width &&
-        other.height == height &&
+        other._width == _width &&
+        other._height == _height &&
         cacheRawData == other.cacheRawData &&
         imageCacheName == other.imageCacheName;
   }
 
   @override
-  int get hashCode => hashValues(
-        providerCacheKey,
+  int get hashCode => Object.hash(
+        _providerCacheKey,
         maxBytes,
         compressionRatio,
-        width,
-        height,
+        _width,
+        _height,
         cacheRawData,
         imageCacheName,
       );

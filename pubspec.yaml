@@ -1,11 +1,11 @@
 name: extended_image_library
 description: package library for extended_image, extended_text and extended_text_field, provide common base class.
-version: 3.3.0
+version: 3.4.2
 homepage: https://github.com/fluttercandies/extended_image_library
 
 environment:
-  sdk: '>=2.17.0 <3.0.0'
-  flutter: '>=3.0.0'
+  sdk: '>=2.18.0 <3.0.0'
+  flutter: '>=3.3.0'
 
 dependencies:
   crypto: ^3.0.0

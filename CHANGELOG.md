@@ -1,3 +1,15 @@
+## 3.4.2
+
+* Fix issue that cannot compile ExtendedImage.file on the web (566#)
+
+## 3.4.1
+
+* clearMemoryCacheWhenDispose is not working with imageCacheName property, obtainCacheStatus method should be overrided.(#44)
+
+## 3.4.0
+
+* Migrate to 3.3.0 (load=>loadBuffer)
+
 ## 3.3.0
 
 * Migrate to 3.0.0

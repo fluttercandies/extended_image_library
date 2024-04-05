@@ -63,8 +63,8 @@ abstract class ExtendedNetworkImageProvider
   Duration? get cacheMaxAge;
 
   @override
-  ImageStreamCompleter load(
-      ExtendedNetworkImageProvider key, DecoderCallback decode);
+  ImageStreamCompleter loadBuffer(
+      ExtendedNetworkImageProvider key, DecoderBufferCallback decode);
 
   ///get network image data from cached
   Future<Uint8List?> getNetworkImageData({

@@ -1,6 +1,9 @@
+import 'dart:async';
+// ignore: unnecessary_import
 import 'dart:typed_data';
-import 'dart:ui' as ui show Codec;
+import 'dart:ui' as ui show Codec, ImmutableBuffer;
 import 'package:extended_image_library/src/extended_resize_image_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart' hide imageCache;
 
 /// The cached raw image data
@@ -53,13 +56,14 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   /// for example, compress
   Future<ui.Codec> instantiateImageCodec(
     Uint8List data,
-    DecoderCallback decode,
+    DecoderBufferCallback decode,
   ) async {
     if (cacheRawData) {
       rawImageDataMap[this] = data;
     }
-
-    return await decode(data);
+    final ui.ImmutableBuffer buffer =
+        await ui.ImmutableBuffer.fromUint8List(data);
+    return await decode(buffer);
   }
 
   /// Called by [resolve] with the key returned by [obtainKey].
@@ -100,7 +104,8 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      () => load(key, PaintingBinding.instance.instantiateImageCodec),
+      () => loadBuffer(
+          key, PaintingBinding.instance.instantiateImageCodecFromBuffer),
       onError: handleError,
     );
     if (completer != null) {
@@ -121,4 +126,102 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     final T key = await obtainKey(configuration);
     return cache.evict(key, includeLive: includeLive);
   }
+
+  @override
+  Future<ImageCacheStatus?> obtainCacheStatus({
+    required ImageConfiguration configuration,
+    ImageErrorListener? handleError,
+  }) {
+    return _obtainCacheStatus(
+      configuration: configuration,
+      handleError: handleError,
+    );
+  }
+
+  // copy from offical
+  Future<ImageCacheStatus?> _obtainCacheStatus({
+    required ImageConfiguration configuration,
+    ImageErrorListener? handleError,
+  }) {
+    // ignore: unnecessary_null_comparison
+    assert(configuration != null);
+    final Completer<ImageCacheStatus?> completer =
+        Completer<ImageCacheStatus?>();
+    _createErrorHandlerAndKey(
+      configuration,
+      (T key, ImageErrorListener innerHandleError) {
+        completer.complete(imageCache.statusForKey(key));
+      },
+      (T? key, Object exception, StackTrace? stack) async {
+        if (handleError != null) {
+          handleError(exception, stack);
+        } else {
+          InformationCollector? collector;
+          assert(() {
+            collector = () => <DiagnosticsNode>[
+                  DiagnosticsProperty<ImageProvider>('Image provider', this),
+                  DiagnosticsProperty<ImageConfiguration>(
+                      'Image configuration', configuration),
+                  DiagnosticsProperty<T>('Image key', key, defaultValue: null),
+                ];
+            return true;
+          }());
+          FlutterError.reportError(FlutterErrorDetails(
+            context: ErrorDescription(
+                'while checking the cache location of an image'),
+            informationCollector: collector,
+            exception: exception,
+            stack: stack,
+          ));
+          completer.complete(null);
+        }
+      },
+    );
+    return completer.future;
+  }
+
+  /// This method is used by both [resolve] and [obtainCacheStatus] to ensure
+  /// that errors thrown during key creation are handled whether synchronous or
+  /// asynchronous.
+  void _createErrorHandlerAndKey(
+    ImageConfiguration configuration,
+    _KeyAndErrorHandlerCallback<T> successCallback,
+    _AsyncKeyErrorHandler<T?> errorCallback,
+  ) {
+    T? obtainedKey;
+    bool didError = false;
+    Future<void> handleError(Object exception, StackTrace? stack) async {
+      if (didError) {
+        return;
+      }
+      if (!didError) {
+        errorCallback(obtainedKey, exception, stack);
+      }
+      didError = true;
+    }
+
+    Future<T> key;
+    try {
+      key = obtainKey(configuration);
+    } catch (error, stackTrace) {
+      handleError(error, stackTrace);
+      return;
+    }
+    key.then<void>((T key) {
+      obtainedKey = key;
+      try {
+        successCallback(key, handleError);
+      } catch (error, stackTrace) {
+        handleError(error, stackTrace);
+      }
+    }).catchError(handleError);
+  }
 }
+
+/// Signature for the callback taken by [_createErrorHandlerAndKey].
+typedef _KeyAndErrorHandlerCallback<T> = void Function(
+    T key, ImageErrorListener handleError);
+
+/// Signature used for error handling by [_createErrorHandlerAndKey].
+typedef _AsyncKeyErrorHandler<T> = Future<void> Function(
+    T key, Object exception, StackTrace? stack);

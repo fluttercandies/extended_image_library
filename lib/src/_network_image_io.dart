@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui show Codec;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -91,8 +90,9 @@ class ExtendedNetworkImageProvider
   final Duration? cacheMaxAge;
 
   @override
-  ImageStreamCompleter load(
-      image_provider.ExtendedNetworkImageProvider key, DecoderCallback decode) {
+  ImageStreamCompleter loadBuffer(
+      image_provider.ExtendedNetworkImageProvider key,
+      DecoderBufferCallback decode) {
     // Ownership of this controller is handed off to [_loadAsync]; it is that
     // method's responsibility to close the controller's stream when the image
     // has been loaded or an error is thrown.
@@ -107,6 +107,7 @@ class ExtendedNetworkImageProvider
       ),
       scale: key.scale,
       chunkEvents: chunkEvents.stream,
+      debugLabel: key.url,
       informationCollector: () {
         return <DiagnosticsNode>[
           DiagnosticsProperty<ImageProvider>('Image provider', this),
@@ -126,7 +127,7 @@ class ExtendedNetworkImageProvider
   Future<ui.Codec> _loadAsync(
     ExtendedNetworkImageProvider key,
     StreamController<ImageChunkEvent> chunkEvents,
-    DecoderCallback decode,
+    DecoderBufferCallback decode,
   ) async {
     assert(key == this);
     final String md5Key = cacheKey ?? keyToMd5(key.url);
@@ -321,7 +322,7 @@ class ExtendedNetworkImageProvider
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
         url,
         scale,
         cacheRawData,
