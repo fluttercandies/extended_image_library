@@ -1,3 +1,7 @@
+## 3.5.4
+
+* Fix AssetImage flicker(#67)
+
 ## 3.5.3
 
 * upgrade http to 1.0.0

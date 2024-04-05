@@ -30,18 +30,14 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
-    final Completer<ExtendedAssetBundleImageKey> completer =
-        Completer<ExtendedAssetBundleImageKey>();
-    super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      completer.complete(ExtendedAssetBundleImageKey(
-        bundle: value.bundle,
-        scale: value.scale,
-        name: value.name,
-        cacheRawData: cacheRawData,
-        imageCacheName: imageCacheName,
-      ));
-    });
-    return completer.future;
+    return SynchronousFuture<ExtendedAssetBundleImageKey>(
+        ExtendedAssetBundleImageKey(
+      bundle: bundle ?? configuration.bundle ?? rootBundle,
+      name: keyName,
+      scale: scale,
+      cacheRawData: cacheRawData,
+      imageCacheName: imageCacheName,
+    ));
   }
 
   @override
@@ -102,18 +98,16 @@ class ExtendedAssetImageProvider extends AssetImage
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
-    final Completer<ExtendedAssetBundleImageKey> completer =
-        Completer<ExtendedAssetBundleImageKey>();
-    super.obtainKey(configuration).then((AssetBundleImageKey value) {
-      completer.complete(ExtendedAssetBundleImageKey(
+    return obtainNewKey<ExtendedAssetBundleImageKey>(
+      (AssetBundleImageKey value) => ExtendedAssetBundleImageKey(
         bundle: value.bundle,
         scale: value.scale,
         name: value.name,
         cacheRawData: cacheRawData,
         imageCacheName: imageCacheName,
-      ));
-    });
-    return completer.future;
+      ),
+      () => super.obtainKey(configuration),
+    );
   }
 
   @override
