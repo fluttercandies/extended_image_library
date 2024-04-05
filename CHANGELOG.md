@@ -1,3 +1,8 @@
+# 3.4.3
+
+* Fix AssetImage flicker(#67)
+
+
 ## 3.4.2
 
 * Fix issue that cannot compile ExtendedImage.file on the web (566#)
