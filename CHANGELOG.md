@@ -1,3 +1,7 @@
+## 3.3.1
+
+* Fix AssetImage flicker(#67)
+
 ## 3.3.0
 
 * Migrate to 3.0.0
