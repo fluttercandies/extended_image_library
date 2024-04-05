@@ -30,19 +30,23 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
-    return SynchronousFuture<ExtendedAssetBundleImageKey>(
-        ExtendedAssetBundleImageKey(
-      bundle: bundle ?? configuration.bundle ?? rootBundle,
-      name: keyName,
-      scale: scale,
-      cacheRawData: cacheRawData,
-      imageCacheName: imageCacheName,
-    ));
+    final Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
+    super.obtainKey(configuration).then((AssetBundleImageKey value) {
+      completer.complete(ExtendedAssetBundleImageKey(
+        bundle: value.bundle,
+        scale: value.scale,
+        name: value.name,
+        cacheRawData: cacheRawData,
+        imageCacheName: imageCacheName,
+      ));
+    });
+    return completer.future;
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
-      AssetBundleImageKey key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(
+      AssetBundleImageKey key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -59,7 +63,7 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderBufferCallback decode) async {
+      AssetBundleImageKey key, ImageDecoderCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -98,21 +102,23 @@ class ExtendedAssetImageProvider extends AssetImage
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
       ImageConfiguration configuration) {
-    return obtainNewKey<ExtendedAssetBundleImageKey>(
-      (AssetBundleImageKey value) => ExtendedAssetBundleImageKey(
+    final Completer<ExtendedAssetBundleImageKey> completer =
+        Completer<ExtendedAssetBundleImageKey>();
+    super.obtainKey(configuration).then((AssetBundleImageKey value) {
+      completer.complete(ExtendedAssetBundleImageKey(
         bundle: value.bundle,
         scale: value.scale,
         name: value.name,
         cacheRawData: cacheRawData,
         imageCacheName: imageCacheName,
-      ),
-      () => super.obtainKey(configuration),
-    );
+      ));
+    });
+    return completer.future;
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
-      AssetBundleImageKey key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(
+      AssetBundleImageKey key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -129,7 +135,7 @@ class ExtendedAssetImageProvider extends AssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, DecoderBufferCallback decode) async {
+      AssetBundleImageKey key, ImageDecoderCallback decode) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.

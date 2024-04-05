@@ -2,24 +2,27 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// ignore_for_file: implementation_imports
+
 import 'dart:async';
-import 'dart:html' as html;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:extended_image_library/src/extended_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/src/services/dom.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import 'extended_image_provider.dart';
+import 'package:js/js.dart';
 
 import 'extended_network_image_provider.dart' as image_provider;
 
 /// Creates a type for an overridable factory function for testing purposes.
-typedef HttpRequestFactory = html.HttpRequest Function();
+typedef HttpRequestFactory = DomXMLHttpRequest Function();
 
 /// Default HTTP client.
-html.HttpRequest _httpClient() {
-  return html.HttpRequest();
+DomXMLHttpRequest _httpClient() {
+  return createDomXMLHttpRequest();
 }
 
 /// Creates an overridable factory function.
@@ -106,9 +109,9 @@ class ExtendedNetworkImageProvider
   }
 
   @override
-  ImageStreamCompleter loadBuffer(
+  ImageStreamCompleter loadImage(
       image_provider.ExtendedNetworkImageProvider key,
-      DecoderBufferCallback decode) {
+      ImageDecoderCallback decode) {
     // Ownership of this controller is handed off to [_loadAsync]; it is that
     // method's responsibility to close the controller's stream when the image
     // has been loaded or an error is thrown.
@@ -129,7 +132,7 @@ class ExtendedNetworkImageProvider
     );
   }
 
-  // todo(garyq): We should eventually support custom decoding of network images on Web as
+  // TODO(garyq): We should eventually support custom decoding of network images on Web as
   // well, see https://github.com/flutter/flutter/issues/42789.
   //
   // Web does not support decoding network images to a specified size. The decode parameter
@@ -137,25 +140,30 @@ class ExtendedNetworkImageProvider
   // directly in place of the typical `instantiateImageCodec` method.
   Future<ui.Codec> _loadAsync(
       image_provider.ExtendedNetworkImageProvider key,
-      DecoderBufferCallback decode,
+      ImageDecoderCallback decode,
       StreamController<ImageChunkEvent> chunkEvents) async {
     assert(key == this);
+
     final Uri resolved = Uri.base.resolve(key.url);
+
+    final bool containsNetworkImageHeaders = key.headers?.isNotEmpty ?? false;
 
     // We use a different method when headers are set because the
     // `ui.webOnlyInstantiateImageCodecFromUrl` method is not capable of handling headers.
-    if (key.headers?.isNotEmpty ?? false) {
-      final Completer<html.HttpRequest> completer =
-          Completer<html.HttpRequest>();
-      final html.HttpRequest request = httpRequestFactory();
+    if (isCanvasKit || containsNetworkImageHeaders) {
+      final Completer<DomXMLHttpRequest> completer =
+          Completer<DomXMLHttpRequest>();
+      final DomXMLHttpRequest request = httpRequestFactory();
 
-      request.open('GET', key.url, async: true);
+      request.open('GET', key.url, true);
       request.responseType = 'arraybuffer';
-      key.headers!.forEach((String header, String value) {
-        request.setRequestHeader(header, value);
-      });
+      if (containsNetworkImageHeaders) {
+        key.headers!.forEach((String header, String value) {
+          request.setRequestHeader(header, value);
+        });
+      }
 
-      request.onLoad.listen((html.ProgressEvent e) {
+      request.addEventListener('load', allowInterop((DomEvent e) {
         final int? status = request.status;
         final bool accepted = status! >= 200 && status < 300;
         final bool fileUri = status == 0; // file:// URIs have status of 0.
@@ -171,9 +179,9 @@ class ExtendedNetworkImageProvider
           throw NetworkImageLoadException(
               statusCode: request.status ?? 400, uri: resolved);
         }
-      });
+      }));
 
-      request.onError.listen(completer.completeError);
+      request.addEventListener('error', allowInterop(completer.completeError));
 
       request.send();
 

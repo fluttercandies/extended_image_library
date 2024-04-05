@@ -25,16 +25,16 @@ class ExtendedMemoryImageProvider extends MemoryImage
 
   @override
   Uint8List get rawImageData => bytes;
+
   @override
-  ImageStreamCompleter loadBuffer(
-      MemoryImage key, DecoderBufferCallback decode) {
+  ImageStreamCompleter loadImage(MemoryImage key, ImageDecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
     );
   }
 
-  Future<ui.Codec> _loadAsync(MemoryImage key, DecoderBufferCallback decode) {
+  Future<ui.Codec> _loadAsync(MemoryImage key, ImageDecoderCallback decode) {
     assert(key == this);
     return instantiateImageCodec(bytes, decode);
   }

@@ -1,7 +1,20 @@
-# 3.4.3
+## 3.5.3
 
-* Fix AssetImage flicker(#67)
+* upgrade http to 1.0.0
 
+## 3.5.2
+
+* Fix issue that can't load image if cacheWidth or cacheHeight set on web platform #56
+* Mark [ExtendedResizeImage.compressionRatio] and [ExtendedResizeImage.maxBytes] are not supported on web. (Error: Unsupported operation: ImageDescriptor is not supported on web.)
+
+## 3.5.1
+
+* Fix miss _network_image_web.dart #582
+
+## 3.5.0
+
+* Breaking Change: remove loadBuffer method, and add loadImage method [https://github.com/flutter/flutter/pull/118966]
+* Migrate to 3.7.0
 
 ## 3.4.2
 

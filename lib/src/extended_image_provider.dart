@@ -56,7 +56,7 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
   /// for example, compress
   Future<ui.Codec> instantiateImageCodec(
     Uint8List data,
-    DecoderBufferCallback decode,
+    ImageDecoderCallback decode,
   ) async {
     if (cacheRawData) {
       rawImageDataMap[this] = data;
@@ -104,8 +104,10 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     }
     final ImageStreamCompleter? completer = imageCache.putIfAbsent(
       key,
-      () => loadBuffer(
-          key, PaintingBinding.instance.instantiateImageCodecFromBuffer),
+      () => loadImage(
+        key,
+        PaintingBinding.instance.instantiateImageCodecWithSize,
+      ),
       onError: handleError,
     );
     if (completer != null) {
@@ -215,37 +217,6 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
         handleError(error, stackTrace);
       }
     }).catchError(handleError);
-  }
-
-  /// obtain new key base on old key
-  Future<S> obtainNewKey<S>(
-    S Function(T value) createNewKey,
-    Future<T> Function() obtainKey,
-  ) {
-    Completer<S>? completer;
-    Future<S>? result;
-
-    obtainKey().then((T value) {
-      final S key = createNewKey(value);
-      if (completer != null) {
-        // We already returned from this function, which means we are in the
-        // asynchronous mode. Pass the value to the completer. The completer's
-        // future is what we returned.
-        completer.complete(key);
-      } else {
-        // We haven't yet returned, so we must have been called synchronously
-        // just after loadStructuredData returned (which means it provided us
-        // with a SynchronousFuture). Let's return a SynchronousFuture
-        // ourselves.
-        result = SynchronousFuture<S>(key);
-      }
-    });
-    if (result != null) {
-      return result!;
-    }
-
-    completer = Completer<S>();
-    return completer.future;
   }
 }
 

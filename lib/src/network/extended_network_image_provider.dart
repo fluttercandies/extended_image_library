@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:extended_image_library/src/extended_image_provider.dart';
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import '_network_image_io.dart' if (dart.library.html) '_network_image_web.dart'
-    as network_image;
-import 'extended_image_provider.dart';
+import 'network_image_io.dart'
+    if (dart.library.js_util) 'network_image_web.dart' as network_image;
 
+/// [NetworkImage]
 abstract class ExtendedNetworkImageProvider
     extends ImageProvider<ExtendedNetworkImageProvider>
     with ExtendedImageProvider<ExtendedNetworkImageProvider> {
@@ -61,10 +62,6 @@ abstract class ExtendedNetworkImageProvider
   /// The max duration to cahce image.
   /// After this time the cache is expired and the image is reloaded.
   Duration? get cacheMaxAge;
-
-  @override
-  ImageStreamCompleter loadBuffer(
-      ExtendedNetworkImageProvider key, DecoderBufferCallback decode);
 
   ///get network image data from cached
   Future<Uint8List?> getNetworkImageData({
