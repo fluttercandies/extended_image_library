@@ -1,3 +1,7 @@
+## 4.0.5
+
+* Loosen `web` version to `0.3.0~9.x.x`, and fit flutter sdk: >= 3.16
+
 ## 4.0.4
 
 * Fix AssetImage flicker(#655)
