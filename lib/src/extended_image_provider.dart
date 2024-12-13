@@ -64,14 +64,13 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
       rawImageDataMap[this] = data;
     }
     final ui.ImmutableBuffer buffer =
-        await ui.ImmutableBuffer.fromUint8List(await _fixSpeed(data));
+        await ui.ImmutableBuffer.fromUint8List(await _tryFixAimSpeed(data));
     return await decode(buffer);
   }
 
-  Future<Uint8List> _fixSpeed(Uint8List image) async {
+  Future<Uint8List> _tryFixAimSpeed(Uint8List image) async {
     return await compute((Uint8List image) {
       bool handled = false;
-
       // gif
       if (!handled) {
         try {
@@ -93,45 +92,6 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
           //
         }
       }
-
-      // webp
-      // if (!handled) {
-      //   // WebP 文件头部标识
-      //   const String riffHeader = 'RIFF';
-      //   const String webpHeader = 'WEBP';
-      //   const String animHeader = 'ANIM';
-      //   // 检查文件是否为 WebP 动画文件
-      //   final bool isNotWebpAnim =
-      //       String.fromCharCodes(image.sublist(0, 4)) != riffHeader ||
-      //           String.fromCharCodes(image.sublist(8, 12)) != webpHeader ||
-      //           !String.fromCharCodes(image).contains(animHeader);
-      //   if (!isNotWebpAnim) {
-      //     handled = true;
-      //     for (int i = 0; i < image.length - 3; i++) {
-      //       // 检查是否为 ANMF 块
-      //       if (image[i] == 0x41 &&
-      //           image[i + 1] == 0x4E &&
-      //           image[i + 2] == 0x4D &&
-      //           image[i + 3] == 0x46) {
-      //         // 动画帧持续时间位于 ANMF 块的第 12 到 15 个字节（小端序）
-      //         int index = i + 12;
-      //         int duration = image[index] |
-      //         (image[index + 1] << 8) |
-      //         (image[index + 2] << 16) |
-      //         (image[index + 3] << 24);
-      //
-      //         // 如果动画帧持续时间小于 100ms，则修改为 100ms
-      //         if (duration < 100) {
-      //           image[index] = 100 & 0xFF; // 低8位
-      //           image[index + 1] = (100 >> 8) & 0xFF; // 中8位
-      //           image[index + 2] = (100 >> 16) & 0xFF; // 高8位
-      //           image[index + 3] = (100 >> 24) & 0xFF; // 更高8位
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-
       return image;
     }, image);
   }
