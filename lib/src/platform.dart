@@ -7,8 +7,8 @@ import 'package:extended_image_library/extended_image_library.dart';
 import 'package:flutter/widgets.dart';
 
 export '_extended_network_image_utils_io.dart'
-    if (dart.library.html) '_extended_network_image_utils_web.dart';
-export '_platform_io.dart' if (dart.library.html) '_platform_web.dart';
+    if (dart.library.js_interop) '_extended_network_image_utils_web.dart';
+export '_platform_io.dart' if (dart.library.js_interop) '_platform_web.dart';
 
 const String cacheImageFolderName = 'cacheimage';
 
