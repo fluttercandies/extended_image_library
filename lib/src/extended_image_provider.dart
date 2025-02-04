@@ -2,6 +2,8 @@ import 'dart:async';
 // ignore: unnecessary_import
 import 'dart:typed_data';
 import 'dart:ui' as ui show Codec, ImmutableBuffer;
+
+import 'package:collection/collection.dart';
 import 'package:extended_image_library/src/extended_resize_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart' hide imageCache;
@@ -62,8 +64,36 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
       rawImageDataMap[this] = data;
     }
     final ui.ImmutableBuffer buffer =
-        await ui.ImmutableBuffer.fromUint8List(data);
+        await ui.ImmutableBuffer.fromUint8List(await _tryFixAimSpeed(data));
     return await decode(buffer);
+  }
+
+  Future<Uint8List> _tryFixAimSpeed(Uint8List image) async {
+    return await compute((Uint8List image) {
+      bool handled = false;
+      // gif
+      if (!handled) {
+        try {
+          for (int i = 0; i < image.length - 2; i++) {
+            final Uint8List slice = image.sublist(i, i + 3);
+            if (const ListEquality<int>()
+                .equals(slice, <int>[0x21, 0xF9, 0x04])) {
+              final int delay1 = image[i + 4];
+              final int delay2 = image[i + 5];
+              final int delay = delay1 | (delay2 << 8);
+              // min 100ms
+              if (delay < 10) {
+                image[i + 4] = 0x0A;
+              }
+            }
+          }
+          handled = true;
+        } catch (e) {
+          //
+        }
+      }
+      return image;
+    }, image);
   }
 
   /// Called by [resolve] with the key returned by [obtainKey].
