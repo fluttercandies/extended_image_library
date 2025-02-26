@@ -1,6 +1,11 @@
+## 5.0.0
+
+* Migrate to 3.29.0
+* Add WebHtmlElementStrategy for ExtendedNetworkImageProvider on Web
+
 ## 4.0.6
 
-- Make the package WASM compatible
+* Make the package WASM compatible
 
 ## 4.0.5
 

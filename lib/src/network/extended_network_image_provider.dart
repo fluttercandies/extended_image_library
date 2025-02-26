@@ -4,7 +4,8 @@ import 'package:extended_image_library/src/extended_image_provider.dart';
 import 'package:flutter/painting.dart';
 import 'package:http_client_helper/http_client_helper.dart';
 import 'network_image_io.dart'
-    if (dart.library.js_util) 'network_image_web.dart' as network_image;
+    if (dart.library.js_util) 'network_image_web.dart'
+    as network_image;
 
 /// [NetworkImage]
 abstract class ExtendedNetworkImageProvider
@@ -27,6 +28,7 @@ abstract class ExtendedNetworkImageProvider
     bool cacheRawData,
     String? imageCacheName,
     Duration? cacheMaxAge,
+    WebHtmlElementStrategy webHtmlElementStrategy,
   }) = network_image.ExtendedNetworkImageProvider;
 
   /// Time Limit to request image
@@ -62,6 +64,17 @@ abstract class ExtendedNetworkImageProvider
   /// The max duration to cahce image.
   /// After this time the cache is expired and the image is reloaded.
   Duration? get cacheMaxAge;
+
+  /// On the Web platform, specifies when the image is loaded as a
+  /// [WebImageInfo], which causes [Image.network] to display the image in an
+  /// HTML element in a platform view.
+  ///
+  /// See [Image.network] for more explanation.
+  ///
+  /// Defaults to [WebHtmlElementStrategy.never].
+  ///
+  /// Has no effect on other platforms, which always fetch bytes.
+  WebHtmlElementStrategy get webHtmlElementStrategy;
 
   ///get network image data from cached
   Future<Uint8List?> getNetworkImageData({

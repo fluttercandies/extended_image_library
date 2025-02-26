@@ -32,6 +32,7 @@ class ExtendedNetworkImageProvider
     this.cancelToken,
     this.imageCacheName,
     this.cacheMaxAge,
+    this.webHtmlElementStrategy = WebHtmlElementStrategy.never,
   });
 
   /// The name of [ImageCache], you can define custom [ImageCache] to store this provider.
@@ -91,6 +92,9 @@ class ExtendedNetworkImageProvider
   final Duration? cacheMaxAge;
 
   @override
+  final WebHtmlElementStrategy webHtmlElementStrategy;
+
+  @override
   ImageStreamCompleter loadImage(
     image_provider.ExtendedNetworkImageProvider key,
     ImageDecoderCallback decode,
@@ -114,7 +118,9 @@ class ExtendedNetworkImageProvider
         return <DiagnosticsNode>[
           DiagnosticsProperty<ImageProvider>('Image provider', this),
           DiagnosticsProperty<image_provider.ExtendedNetworkImageProvider>(
-              'Image key', key),
+            'Image key',
+            key,
+          ),
         ];
       },
     );
@@ -122,7 +128,8 @@ class ExtendedNetworkImageProvider
 
   @override
   Future<ExtendedNetworkImageProvider> obtainKey(
-      ImageConfiguration configuration) {
+    ImageConfiguration configuration,
+  ) {
     return SynchronousFuture<ExtendedNetworkImageProvider>(this);
   }
 
@@ -136,11 +143,7 @@ class ExtendedNetworkImageProvider
     ui.Codec? result;
     if (cache) {
       try {
-        final Uint8List? data = await _loadCache(
-          key,
-          chunkEvents,
-          md5Key,
-        );
+        final Uint8List? data = await _loadCache(key, chunkEvents, md5Key);
         if (data != null) {
           result = await instantiateImageCodec(data, decode);
         }
@@ -153,10 +156,7 @@ class ExtendedNetworkImageProvider
 
     if (result == null) {
       try {
-        final Uint8List? data = await _loadNetwork(
-          key,
-          chunkEvents,
-        );
+        final Uint8List? data = await _loadNetwork(key, chunkEvents);
         if (data != null) {
           result = await instantiateImageCodec(data, decode);
         }
@@ -183,7 +183,8 @@ class ExtendedNetworkImageProvider
     String md5Key,
   ) async {
     final Directory _cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+      join((await getTemporaryDirectory()).path, cacheImageFolderName),
+    );
     Uint8List? data;
     // exist, try to find cache image file
     if (_cacheImagesDirectory.existsSync()) {
@@ -208,10 +209,7 @@ class ExtendedNetworkImageProvider
     }
     // load from network
     if (data == null) {
-      data = await _loadNetwork(
-        key,
-        chunkEvents,
-      );
+      data = await _loadNetwork(key, chunkEvents);
       if (data != null) {
         // cache image file
         await File(join(_cacheImagesDirectory.path, md5Key)).writeAsBytes(data);
@@ -241,18 +239,22 @@ class ExtendedNetworkImageProvider
 
       final Uint8List bytes = await consolidateHttpClientResponseBytes(
         response,
-        onBytesReceived: chunkEvents != null
-            ? (int cumulative, int? total) {
-                chunkEvents.add(ImageChunkEvent(
-                  cumulativeBytesLoaded: cumulative,
-                  expectedTotalBytes: total,
-                ));
-              }
-            : null,
+        onBytesReceived:
+            chunkEvents != null
+                ? (int cumulative, int? total) {
+                  chunkEvents.add(
+                    ImageChunkEvent(
+                      cumulativeBytesLoaded: cumulative,
+                      expectedTotalBytes: total,
+                    ),
+                  );
+                }
+                : null,
       );
       if (bytes.lengthInBytes == 0) {
         return Future<Uint8List>.error(
-            StateError('NetworkImage is an empty file: $resolved'));
+          StateError('NetworkImage is an empty file: $resolved'),
+        );
       }
 
       return bytes;
@@ -286,17 +288,13 @@ class ExtendedNetworkImageProvider
     });
     final HttpClientResponse response = await request.close();
     if (timeLimit != null) {
-      response.timeout(
-        timeLimit!,
-      );
+      response.timeout(timeLimit!);
     }
     return response;
   }
 
   // Http get with cancel, delay try again
-  Future<HttpClientResponse?> _tryGetResponse(
-    Uri resolved,
-  ) async {
+  Future<HttpClientResponse?> _tryGetResponse(Uri resolved) async {
     cancelToken?.throwIfCancellationRequested();
     return await RetryHelper.tryRun<HttpClientResponse>(
       () {
@@ -333,25 +331,24 @@ class ExtendedNetworkImageProvider
 
   @override
   int get hashCode => Object.hash(
-        url,
-        scale,
-        cacheRawData,
-        timeLimit,
-        cancelToken,
-        timeRetry,
-        cache,
-        cacheKey,
-        //headers,
-        retries,
-        imageCacheName,
-        cacheMaxAge,
-      );
+    url,
+    scale,
+    cacheRawData,
+    timeLimit,
+    cancelToken,
+    timeRetry,
+    cache,
+    cacheKey,
+    //headers,
+    retries,
+    imageCacheName,
+    cacheMaxAge,
+  );
 
   @override
   String toString() => '$runtimeType("$url", scale: $scale)';
 
   @override
-
   /// Get network image data from cached
   Future<Uint8List?> getNetworkImageData({
     StreamController<ImageChunkEvent>? chunkEvents,
@@ -359,25 +356,18 @@ class ExtendedNetworkImageProvider
     final String uId = cacheKey ?? keyToMd5(url);
 
     if (cache) {
-      return await _loadCache(
-        this,
-        chunkEvents,
-        uId,
-      );
+      return await _loadCache(this, chunkEvents, uId);
     }
 
-    return await _loadNetwork(
-      this,
-      chunkEvents,
-    );
+    return await _loadNetwork(this, chunkEvents);
   }
 
   // Do not access this field directly; use [_httpClient] instead.
   // We set `autoUncompress` to false to ensure that we can trust the value of
   // the `Content-Length` HTTP header. We automatically uncompress the content
   // in our call to [consolidateHttpClientResponseBytes].
-  static final HttpClient _sharedHttpClient = HttpClient()
-    ..autoUncompress = false;
+  static final HttpClient _sharedHttpClient =
+      HttpClient()..autoUncompress = false;
 
   static HttpClient get httpClient {
     HttpClient client = _sharedHttpClient;
