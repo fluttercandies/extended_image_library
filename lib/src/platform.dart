@@ -46,9 +46,10 @@ Future<Uint8List?> getNetworkImageData(
   bool useCache = true,
   StreamController<ImageChunkEvent>? chunkEvents,
 }) async {
-  return ExtendedNetworkImageProvider(url, cache: useCache).getNetworkImageData(
-    chunkEvents: chunkEvents,
-  );
+  return ExtendedNetworkImageProvider(
+    url,
+    cache: useCache,
+  ).getNetworkImageData(chunkEvents: chunkEvents);
 }
 
 /// get md5 from key

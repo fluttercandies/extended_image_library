@@ -35,8 +35,10 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
 
   /// The raw data of image
   Uint8List get rawImageData {
-    assert(cacheRawData,
-        'you should set [ExtendedImageProvider.cacheRawData] to true, if you want to get rawImageData from provider.');
+    assert(
+      cacheRawData,
+      'you should set [ExtendedImageProvider.cacheRawData] to true, if you want to get rawImageData from provider.',
+    );
 
     ImageProvider<Object> provider = this;
     if (this is ExtendedResizeImage) {
@@ -61,8 +63,9 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
     if (cacheRawData) {
       rawImageDataMap[this] = data;
     }
-    final ui.ImmutableBuffer buffer =
-        await ui.ImmutableBuffer.fromUint8List(data);
+    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
+      data,
+    );
     return await decode(buffer);
   }
 
@@ -160,21 +163,27 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
         } else {
           InformationCollector? collector;
           assert(() {
-            collector = () => <DiagnosticsNode>[
+            collector =
+                () => <DiagnosticsNode>[
                   DiagnosticsProperty<ImageProvider>('Image provider', this),
                   DiagnosticsProperty<ImageConfiguration>(
-                      'Image configuration', configuration),
+                    'Image configuration',
+                    configuration,
+                  ),
                   DiagnosticsProperty<T>('Image key', key, defaultValue: null),
                 ];
             return true;
           }());
-          FlutterError.reportError(FlutterErrorDetails(
-            context: ErrorDescription(
-                'while checking the cache location of an image'),
-            informationCollector: collector,
-            exception: exception,
-            stack: stack,
-          ));
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              context: ErrorDescription(
+                'while checking the cache location of an image',
+              ),
+              informationCollector: collector,
+              exception: exception,
+              stack: stack,
+            ),
+          );
           completer.complete(null);
         }
       },
@@ -209,14 +218,16 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
       handleError(error, stackTrace);
       return;
     }
-    key.then<void>((T key) {
-      obtainedKey = key;
-      try {
-        successCallback(key, handleError);
-      } catch (error, stackTrace) {
-        handleError(error, stackTrace);
-      }
-    }).catchError(handleError);
+    key
+        .then<void>((T key) {
+          obtainedKey = key;
+          try {
+            successCallback(key, handleError);
+          } catch (error, stackTrace) {
+            handleError(error, stackTrace);
+          }
+        })
+        .catchError(handleError);
   }
 
   /// obtain new key base on old key
@@ -252,9 +263,9 @@ mixin ExtendedImageProvider<T extends Object> on ImageProvider<T> {
 }
 
 /// Signature for the callback taken by [_createErrorHandlerAndKey].
-typedef _KeyAndErrorHandlerCallback<T> = void Function(
-    T key, ImageErrorListener handleError);
+typedef _KeyAndErrorHandlerCallback<T> =
+    void Function(T key, ImageErrorListener handleError);
 
 /// Signature used for error handling by [_createErrorHandlerAndKey].
-typedef _AsyncKeyErrorHandler<T> = Future<void> Function(
-    T key, Object exception, StackTrace? stack);
+typedef _AsyncKeyErrorHandler<T> =
+    Future<void> Function(T key, Object exception, StackTrace? stack);

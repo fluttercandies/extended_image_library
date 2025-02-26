@@ -29,20 +29,24 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   final String? imageCacheName;
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
-      ImageConfiguration configuration) {
+    ImageConfiguration configuration,
+  ) {
     return SynchronousFuture<ExtendedAssetBundleImageKey>(
-        ExtendedAssetBundleImageKey(
-      bundle: bundle ?? configuration.bundle ?? rootBundle,
-      name: keyName,
-      scale: scale,
-      cacheRawData: cacheRawData,
-      imageCacheName: imageCacheName,
-    ));
+      ExtendedAssetBundleImageKey(
+        bundle: bundle ?? configuration.bundle ?? rootBundle,
+        name: keyName,
+        scale: scale,
+        cacheRawData: cacheRawData,
+        imageCacheName: imageCacheName,
+      ),
+    );
   }
 
   @override
   ImageStreamCompleter loadImage(
-      AssetBundleImageKey key, ImageDecoderCallback decode) {
+    AssetBundleImageKey key,
+    ImageDecoderCallback decode,
+  ) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -59,7 +63,9 @@ class ExtendedExactAssetImageProvider extends ExactAssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, ImageDecoderCallback decode) async {
+    AssetBundleImageKey key,
+    ImageDecoderCallback decode,
+  ) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -97,7 +103,8 @@ class ExtendedAssetImageProvider extends AssetImage
 
   @override
   Future<ExtendedAssetBundleImageKey> obtainKey(
-      ImageConfiguration configuration) {
+    ImageConfiguration configuration,
+  ) {
     return obtainNewKey<ExtendedAssetBundleImageKey>(
       (AssetBundleImageKey value) => ExtendedAssetBundleImageKey(
         bundle: value.bundle,
@@ -112,7 +119,9 @@ class ExtendedAssetImageProvider extends AssetImage
 
   @override
   ImageStreamCompleter loadImage(
-      AssetBundleImageKey key, ImageDecoderCallback decode) {
+    AssetBundleImageKey key,
+    ImageDecoderCallback decode,
+  ) {
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key, decode),
       scale: key.scale,
@@ -129,7 +138,9 @@ class ExtendedAssetImageProvider extends AssetImage
   /// This function is used by [load].
   @protected
   Future<ui.Codec> _loadAsync(
-      AssetBundleImageKey key, ImageDecoderCallback decode) async {
+    AssetBundleImageKey key,
+    ImageDecoderCallback decode,
+  ) async {
     ByteData data;
     // Hot reload/restart could change whether an asset bundle or key in a
     // bundle are available, or if it is a network backed bundle.
@@ -178,11 +189,6 @@ class ExtendedAssetBundleImageKey extends AssetBundleImageKey {
   }
 
   @override
-  int get hashCode => Object.hash(
-        bundle,
-        name,
-        scale,
-        cacheRawData,
-        imageCacheName,
-      );
+  int get hashCode =>
+      Object.hash(bundle, name, scale, cacheRawData, imageCacheName);
 }

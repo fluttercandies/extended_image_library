@@ -8,7 +8,8 @@ import 'platform.dart';
 Future<bool> clearDiskCachedImages({Duration? duration}) async {
   try {
     final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+      join((await getTemporaryDirectory()).path, cacheImageFolderName),
+    );
     if (cacheImagesDirectory.existsSync()) {
       if (duration == null) {
         cacheImagesDirectory.deleteSync(recursive: true);
@@ -47,7 +48,8 @@ Future<File?> getCachedImageFile(String url, {String? cacheKey}) async {
   try {
     final String key = cacheKey ?? keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+      join((await getTemporaryDirectory()).path, cacheImageFolderName),
+    );
     if (cacheImagesDirectory.existsSync()) {
       await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
         if (file.path.endsWith(key)) {
@@ -66,7 +68,8 @@ Future<bool> cachedImageExists(String url, {String? cacheKey}) async {
   try {
     final String key = cacheKey ?? keyToMd5(url);
     final Directory cacheImagesDirectory = Directory(
-        join((await getTemporaryDirectory()).path, cacheImageFolderName));
+      join((await getTemporaryDirectory()).path, cacheImageFolderName),
+    );
     if (cacheImagesDirectory.existsSync()) {
       await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
         if (file.path.endsWith(key)) {
@@ -84,7 +87,8 @@ Future<bool> cachedImageExists(String url, {String? cacheKey}) async {
 Future<int> getCachedSizeBytes() async {
   int size = 0;
   final Directory cacheImagesDirectory = Directory(
-      join((await getTemporaryDirectory()).path, cacheImageFolderName));
+    join((await getTemporaryDirectory()).path, cacheImageFolderName),
+  );
   if (cacheImagesDirectory.existsSync()) {
     await for (final FileSystemEntity file in cacheImagesDirectory.list()) {
       size += file.statSync().size;

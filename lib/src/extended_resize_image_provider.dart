@@ -26,13 +26,15 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
     this.cacheRawData = false,
     this.imageCacheName,
     this.policy = ResizeImagePolicy.exact,
-  }) : assert((compressionRatio != null &&
-                compressionRatio > 0 &&
-                compressionRatio < 1 &&
-                !kIsWeb) ||
-            (maxBytes != null && maxBytes > 0 && !kIsWeb) ||
-            width != null ||
-            height != null);
+  }) : assert(
+         (compressionRatio != null &&
+                 compressionRatio > 0 &&
+                 compressionRatio < 1 &&
+                 !kIsWeb) ||
+             (maxBytes != null && maxBytes > 0 && !kIsWeb) ||
+             width != null ||
+             height != null,
+       );
 
   /// The [ImageProvider] that this class wraps.
   final ImageProvider imageProvider;
@@ -118,7 +120,9 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   @override
   ImageStreamCompleter loadImage(
-      _SizeAwareCacheKey key, ImageDecoderCallback decode) {
+    _SizeAwareCacheKey key,
+    ImageDecoderCallback decode,
+  ) {
     Future<Codec> decodeResize(
       ImmutableBuffer buffer, {
       TargetImageSizeCallback? getTargetSize,
@@ -139,8 +143,10 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       );
     }
 
-    final ImageStreamCompleter completer =
-        imageProvider.loadImage(key._providerCacheKey, decodeResize);
+    final ImageStreamCompleter completer = imageProvider.loadImage(
+      key._providerCacheKey,
+      decodeResize,
+    );
     if (!kReleaseMode) {
       completer.debugLabel =
           '${completer.debugLabel} - Resized(${key._width}×${key._height})';
@@ -159,26 +165,30 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
       if (completer == null) {
         // This future has completed synchronously (completer was never assigned),
         // so we can directly create the synchronous result to return.
-        result = SynchronousFuture<_SizeAwareCacheKey>(_SizeAwareCacheKey(
-          key,
-          compressionRatio,
-          maxBytes,
-          width,
-          height,
-          cacheRawData,
-          imageCacheName,
-        ));
+        result = SynchronousFuture<_SizeAwareCacheKey>(
+          _SizeAwareCacheKey(
+            key,
+            compressionRatio,
+            maxBytes,
+            width,
+            height,
+            cacheRawData,
+            imageCacheName,
+          ),
+        );
       } else {
         // This future did not synchronously complete.
-        completer.complete(_SizeAwareCacheKey(
-          key,
-          compressionRatio,
-          maxBytes,
-          width,
-          height,
-          cacheRawData,
-          imageCacheName,
-        ));
+        completer.complete(
+          _SizeAwareCacheKey(
+            key,
+            compressionRatio,
+            maxBytes,
+            width,
+            height,
+            cacheRawData,
+            imageCacheName,
+          ),
+        );
       }
     });
     if (result != null) {
@@ -229,59 +239,61 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
         targetHeight: targetHeight,
       );
     } else {
-      return decode(buffer,
-          getTargetSize: (int intrinsicWidth, int intrinsicHeight) {
-        switch (policy) {
-          case ResizeImagePolicy.exact:
-            int? targetWidth = width;
-            int? targetHeight = height;
+      return decode(
+        buffer,
+        getTargetSize: (int intrinsicWidth, int intrinsicHeight) {
+          switch (policy) {
+            case ResizeImagePolicy.exact:
+              int? targetWidth = width;
+              int? targetHeight = height;
 
-            if (!allowUpscaling) {
-              if (targetWidth != null && targetWidth > intrinsicWidth) {
-                targetWidth = intrinsicWidth;
+              if (!allowUpscaling) {
+                if (targetWidth != null && targetWidth > intrinsicWidth) {
+                  targetWidth = intrinsicWidth;
+                }
+                if (targetHeight != null && targetHeight > intrinsicHeight) {
+                  targetHeight = intrinsicHeight;
+                }
               }
-              if (targetHeight != null && targetHeight > intrinsicHeight) {
-                targetHeight = intrinsicHeight;
-              }
-            }
 
-            return TargetImageSize(width: targetWidth, height: targetHeight);
-          case ResizeImagePolicy.fit:
-            final double aspectRatio = intrinsicWidth / intrinsicHeight;
-            final int maxWidth = width ?? intrinsicWidth;
-            final int maxHeight = height ?? intrinsicHeight;
-            int targetWidth = intrinsicWidth;
-            int targetHeight = intrinsicHeight;
+              return TargetImageSize(width: targetWidth, height: targetHeight);
+            case ResizeImagePolicy.fit:
+              final double aspectRatio = intrinsicWidth / intrinsicHeight;
+              final int maxWidth = width ?? intrinsicWidth;
+              final int maxHeight = height ?? intrinsicHeight;
+              int targetWidth = intrinsicWidth;
+              int targetHeight = intrinsicHeight;
 
-            if (targetWidth > maxWidth) {
-              targetWidth = maxWidth;
-              targetHeight = targetWidth ~/ aspectRatio;
-            }
-
-            if (targetHeight > maxHeight) {
-              targetHeight = maxHeight;
-              targetWidth = (targetHeight * aspectRatio).floor();
-            }
-
-            if (allowUpscaling) {
-              if (width == null) {
-                assert(height != null);
-                targetHeight = height!;
-                targetWidth = (targetHeight * aspectRatio).floor();
-              } else if (height == null) {
-                targetWidth = width!;
+              if (targetWidth > maxWidth) {
+                targetWidth = maxWidth;
                 targetHeight = targetWidth ~/ aspectRatio;
-              } else {
-                final int derivedMaxWidth = (maxHeight * aspectRatio).floor();
-                final int derivedMaxHeight = maxWidth ~/ aspectRatio;
-                targetWidth = min(maxWidth, derivedMaxWidth);
-                targetHeight = min(maxHeight, derivedMaxHeight);
               }
-            }
 
-            return TargetImageSize(width: targetWidth, height: targetHeight);
-        }
-      });
+              if (targetHeight > maxHeight) {
+                targetHeight = maxHeight;
+                targetWidth = (targetHeight * aspectRatio).floor();
+              }
+
+              if (allowUpscaling) {
+                if (width == null) {
+                  assert(height != null);
+                  targetHeight = height!;
+                  targetWidth = (targetHeight * aspectRatio).floor();
+                } else if (height == null) {
+                  targetWidth = width!;
+                  targetHeight = targetWidth ~/ aspectRatio;
+                } else {
+                  final int derivedMaxWidth = (maxHeight * aspectRatio).floor();
+                  final int derivedMaxHeight = maxWidth ~/ aspectRatio;
+                  targetWidth = min(maxWidth, derivedMaxWidth);
+                  targetHeight = min(maxHeight, derivedMaxHeight);
+                }
+              }
+
+              return TargetImageSize(width: targetWidth, height: targetHeight);
+          }
+        },
+      );
     }
   }
 
@@ -316,15 +328,15 @@ class ExtendedResizeImage extends ImageProvider<_SizeAwareCacheKey>
 
   @override
   int get hashCode => Object.hash(
-        imageProvider,
-        compressionRatio,
-        maxBytes,
-        width,
-        height,
-        allowUpscaling,
-        cacheRawData,
-        imageCacheName,
-      );
+    imageProvider,
+    compressionRatio,
+    maxBytes,
+    width,
+    height,
+    allowUpscaling,
+    cacheRawData,
+    imageCacheName,
+  );
 }
 
 @immutable
@@ -384,12 +396,12 @@ class _SizeAwareCacheKey {
 
   @override
   int get hashCode => Object.hash(
-        _providerCacheKey,
-        maxBytes,
-        compressionRatio,
-        _width,
-        _height,
-        cacheRawData,
-        imageCacheName,
-      );
+    _providerCacheKey,
+    maxBytes,
+    compressionRatio,
+    _width,
+    _height,
+    cacheRawData,
+    imageCacheName,
+  );
 }

@@ -52,10 +52,6 @@ class ExtendedMemoryImageProvider extends MemoryImage
   }
 
   @override
-  int get hashCode => Object.hash(
-        bytes.hashCode,
-        scale,
-        cacheRawData,
-        imageCacheName,
-      );
+  int get hashCode =>
+      Object.hash(bytes.hashCode, scale, cacheRawData, imageCacheName);
 }
