@@ -44,11 +44,23 @@ ImageCache? getMemoryImageCache([String? name]) {
 Future<Uint8List?> getNetworkImageData(
   String url, {
   bool useCache = true,
+  CancellationToken? cancelToken,
+  Duration? cacheMaxAge,
+  Duration? timeLimit,
+  Map<String, String>? headers,
   StreamController<ImageChunkEvent>? chunkEvents,
+  String? cacheKey,
+  String? imageCacheName,
 }) async {
   return ExtendedNetworkImageProvider(
     url,
     cache: useCache,
+    cacheKey: cacheKey,
+    cacheMaxAge: cacheMaxAge,
+    cancelToken: cancelToken,
+    headers: headers,
+    imageCacheName: imageCacheName,
+    timeLimit: timeLimit,
   ).getNetworkImageData(chunkEvents: chunkEvents);
 }
 
