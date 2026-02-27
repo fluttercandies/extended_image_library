@@ -1,3 +1,7 @@
+## 5.0.2
+
+* Remove discontinued js  dependency
+
 ## 5.0.1
 
 * Make the package WASM compatible
