@@ -170,7 +170,7 @@ class ExtendedNetworkImageProvider
     //Failed to load
     if (result == null) {
       //result = await ui.instantiateImageCodec(kTransparentImage);
-      return Future<ui.Codec>.error(StateError('Failed to load $url.'));
+      return Future<ui.Codec>.error(StateError('Failed to load $url'));
     }
 
     return result;
@@ -260,9 +260,9 @@ class ExtendedNetworkImageProvider
       return bytes;
     } on OperationCanceledError catch (_) {
       if (printError) {
-        print('User cancel request $url.');
+        print('User cancel request $url');
       }
-      return Future<Uint8List>.error(StateError('User cancel request $url.'));
+      return Future<Uint8List>.error(StateError('User cancel request $url'));
     } catch (e) {
       if (printError) {
         print(e);
